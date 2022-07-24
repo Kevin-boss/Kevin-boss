@@ -1,4 +1,4 @@
-- 👋 Hi, I’m @Kevin-boss
+- 👋 Hi, I’m Fang Kevin
 - 👀 I’m interested in artificial intelligence
 - 🌱 I’m currently learning machine learning
 - 💞️ I’m looking to collaborate on machine learning projects
