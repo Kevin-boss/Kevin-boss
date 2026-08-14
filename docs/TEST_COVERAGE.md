@@ -13,5 +13,6 @@ The production test suite separates policy assertions from procedure-level contr
 | Export worker safety | `server/exportPolicy.test.ts` | Missing workers are explicit and malformed worker responses are normalized safely. |
 | Provider governance | `server/provider.integration.test.ts`, `server/providerPolicy.test.ts` | Free/self-hosted selection and paid-only rejection for all current modalities. |
 | Creator empty and guard states | `client/src/pages/creatorEmptyStates.test.tsx` | Script Studio, Research, Assets, Editor, Voice, Jobs, and Copilot render safe empty states; project-dependent creation controls remain disabled before project selection. |
+| Creator mutation feedback | `client/src/pages/ScriptStudio.interaction.test.tsx`, `client/src/pages/Copilot.interaction.test.tsx` | Project selection enables the action; successful mutations refetch and notify; rejected mutations preserve the selected-project context and surface an actionable error. |
 
 The suite intentionally uses controlled test doubles for storage, provider endpoints, the database, and the language model. It validates the application's decisions and persistence contracts without making external network calls or requiring credentials.
