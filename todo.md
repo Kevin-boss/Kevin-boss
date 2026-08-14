@@ -26,7 +26,7 @@
 - [x] Add automated workflow coverage for authorization, AI task validation, structured scripts, job transitions, Copilot tools, and rights checks.
 - [x] Add a dedicated rights-enforcement test beyond asset metadata normalization and map each workflow test category to its test module.
 - [ ] Verify API behavior, responsive UI, loading and error states, build quality, and core interaction flows.
-- [ ] Add state and interaction verification for Script Studio, Research, Assets, Editor, Voice, Jobs, and Copilot workflows.
+- [x] Add state and interaction verification for Script Studio, Research, Assets, Editor, Voice, Jobs, and Copilot workflows.
 - [ ] Add explicit loading, success, and error-state tests for creator workflow queries and mutations, plus a documented verification matrix.
 - [x] Add explicit research citation records and source-grounded summaries to the research API and workspace.
 - [ ] Implement actual TTS generation and apply all catalog filters for gender, tone, accent, speed, and emotion.
