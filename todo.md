@@ -20,7 +20,7 @@
 - [x] Build the media asset library with search, filter, licensing, rights, and upload-ready empty states.
 - [x] Build the timeline editor foundation with video, audio, caption, overlay, and scene tracks plus property editing.
 - [x] Build the Voice and Caption workspace with voice filtering, transcript review, caption styling, and subtitle export controls.
-- [ ] Build the content calendar, social account manager, publishing review, and platform-specific adaptation workspace.
+- [ ] Complete the social-account manager with official OAuth connect, callback, disconnect, and account-selection actions. Calendar, review, and adaptation workspace foundations are complete.
 - [x] Build the analytics, agency/client, approvals, and admin workspace foundations.
 - [x] Add database migrations and apply the schema changes.
 - [x] Add automated workflow coverage for authorization, AI task validation, structured scripts, job transitions, Copilot tools, and rights checks.
@@ -30,11 +30,11 @@
 - [x] Add an approved-voice synthesis control to the Voice & Captions workspace and cover selection, submission, pending, success, and failure states.
 - [x] Add explicit loading, success, and error-state tests for creator workflow queries and mutations, plus a documented verification matrix.
 - [x] Add explicit research citation records and source-grounded summaries to the research API and workspace.
-- [ ] Complete private-provider synthesis support for all catalog controls: gender, tone, accent, speed, and emotion. (Deferred pending private Kokoro worker deployment; public Hugging Face TTS intentionally uses the registered model-default voice.)
+- [ ] Activate the deployed private Kokoro worker for catalog-level synthesis after administrator deployment. The supported speed and delivery-direction controls, consent guard, provenance, and public-model-default boundary are implemented; gender, tone, accent, speed, and emotion remain catalog selection data until the private worker is configured.
 - [x] Implement actual public-provider TTS generation with the validated Hugging Face InferenceClient path and documented public/private voice-control boundary.
 - [x] Verify whether the validated public Hugging Face provider contract supports an authorized natural-voice TTS route before replacing or extending the private Kokoro path.
 - [x] Add an official Hugging Face InferenceClient TTS adapter for approved public-provider voices while retaining consent and provenance checks.
-- [ ] Build official social-account, post, and scheduled-publishing procedures with provider adapters and approval gates. (Deferred by user; not part of current delivery scope.)
+- [ ] Complete official social-account connection and provider-execution adapters after credential activation. Verified provider contracts, approval gates, idempotent attempts, and durable callback scaffolding are complete.
 - [x] Add plan, usage, notifications, and administrative health procedures and supporting UI.
 - [x] Add scene editing, scene-level regeneration, research citations, and platform-copy panels to Script Studio.
 - [x] Add folder/tag and licensing editing controls to the asset library.
@@ -43,8 +43,16 @@
 - [x] Add API, integration, and UI flow tests for the implemented production workflows.
 - [x] Document local configuration, implementation limitations, provider setup, and next steps for external credentials and production workers.
 - [x] Continue credential-independent completion before requesting external keys.
-- [ ] Request and validate remaining external API credentials when deferred social or private-worker integrations are activated. (Deferred by user; collect remaining API keys together at that stage.)
+- [ ] Request and validate the consolidated official social application credentials and optional private-worker tokens in one final collection step, then activate each OAuth/provider adapter sequentially.
 - [x] Record credential setup status and provider validation results in project documentation.
+- [x] Verify official API, OAuth, post-publication, webhook, and licensing requirements for the selected social platforms before integration.
+- [x] Build the content calendar with calendar, agenda, status, approval, and project-linked publishing-plan views.
+- [x] Surface platform-specific copy adaptation in the Publishing workspace using the existing governed generation procedure.
+- [ ] Implement secure social-account OAuth start, callback, connection, disconnect, and account-selection procedures only for verified API contracts.
+- [ ] Complete the approval-aware publication scheduling lifecycle with a dedicated retry procedure and integration coverage for schedule, reschedule, cancel, and queue transitions.
+- [ ] Activate the private-worker controls for deployed catalog-level voice parameters and final-render lifecycle without exposing worker URLs or credentials.
+- [ ] Extend API, integration, and user-flow tests for OAuth connection management and the full scheduling/dispatch lifecycle alongside calendar, adaptation, and private-worker boundaries.
+- [x] Consolidate all verified remaining external API-key requirements into one final collection request after implementation scaffolding is complete.
 
 ---
 
@@ -64,7 +72,7 @@
 ## External integration sequence
 
 - [x] Configure and validate the first required external provider key individually, then record its actual validation result.
-- [ ] Configure and validate social publishing credentials individually after the provider boundary is implemented.
+- [ ] Configure and validate social publishing credentials together after the provider boundary is implemented and the user supplies the consolidated credential set.
 - [ ] Configure and validate worker/render credentials or private endpoints individually after worker deployment is selected.
 - [x] Configure and validate TTS credentials individually after the approved TTS provider is selected.
 - [x] Research and document a current self-hosted natural-voice TTS deployment path before requesting its private endpoint or credentials.

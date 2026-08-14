@@ -187,4 +187,13 @@ describe("provider-backed production procedures", () => {
     vi.mocked(getDb).mockResolvedValue({ select: () => ({ from: () => ({ where: () => queryRows([paidTtsProvider]) }) }) } as any);
     await expect(appRouter.createCaller(ctx).production.voice.synthesize({ projectId: 9, providerId: 5, voiceId: "voice-1", text: "Hello", language: "en" })).rejects.toThrow(/free or self-hosted/i);
   });
+
+  it("reports verified official social adapter readiness without returning credential values", async () => {
+    vi.clearAllMocks();
+    vi.mocked(requireWorkspaceAccess).mockResolvedValue({ workspace: { id: 3 } } as any);
+    const readiness = await appRouter.createCaller(ctx).production.social.connectionReadiness({ workspaceId: 3 });
+    expect(readiness.map(item => item.platform)).toEqual(["youtube", "tiktok", "facebook", "instagram", "linkedin", "x"]);
+    expect(readiness.find(item => item.platform === "linkedin")).toMatchObject({ webhookSupported: false, webhookMode: "manual_refresh", publicationSupported: true });
+    expect(JSON.stringify(readiness)).not.toContain(process.env.HF_TOKEN ?? "a-not-configured-token");
+  });
 });

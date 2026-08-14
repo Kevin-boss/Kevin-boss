@@ -6,13 +6,123 @@ import { PageHeader } from "@/components/PageHeader";
 import { ProjectPicker } from "@/components/ProjectPicker";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { trpc } from "@/lib/trpc";
-import { CalendarClock, CheckCircle2, CircleAlert, Loader2, Send, ShieldCheck } from "lucide-react";
-import React, { FormEvent, useState } from "react";
+import { CalendarDays, CalendarClock, CheckCircle2, ChevronLeft, ChevronRight, CircleAlert, FilePenLine, LayoutList, Loader2, Send, ShieldCheck, Sparkles } from "lucide-react";
+import React, { FormEvent, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 const platforms = ["youtube", "tiktok", "facebook", "instagram", "linkedin", "x"] as const;
-export default function Publishing() { const { activeWorkspaceId } = useWorkspace(); const [projectId, setProjectId] = useState<number | null>(null); const [platform, setPlatform] = useState<(typeof platforms)[number]>("youtube"); const [title, setTitle] = useState(""); const [copy, setCopy] = useState(""); const [scheduledFor, setScheduledFor] = useState(""); const posts = trpc.production.social.listPosts.useQuery({ workspaceId: activeWorkspaceId ?? 0 }, { enabled: Boolean(activeWorkspaceId) }); const accounts = trpc.production.social.listAccounts.useQuery({ workspaceId: activeWorkspaceId ?? 0 }, { enabled: Boolean(activeWorkspaceId) }); const create = trpc.production.social.createPost.useMutation();
-  const submit = async (event: FormEvent) => { event.preventDefault(); if (!projectId) return toast.error("Select a project first."); try { await create.mutateAsync({ projectId, platform, title: title || undefined, copy: copy || undefined, scheduledFor: scheduledFor ? new Date(scheduledFor) : undefined }); await posts.refetch(); setTitle(""); setCopy(""); setScheduledFor(""); toast.success(scheduledFor ? "Approval-required schedule plan created." : "Platform-specific draft created."); } catch (error) { toast.error(error instanceof Error ? error.message : "Could not create publishing plan."); } };
-  return <div className="min-h-full bg-[#0b1020]"><PageHeader eyebrow="Distribution" title="Publishing control room" description="Prepare platform-specific content and approval-aware schedules. Direct posting is unavailable until an official account adapter is connected." />
-    <div className="mx-auto grid max-w-[1500px] gap-6 p-5 lg:grid-cols-[370px_1fr] md:p-8"><aside className="space-y-4"><Card className="border-white/7 bg-white/[.035] shadow-none"><CardContent className="p-5"><div className="flex items-center gap-2 text-cyan-200"><Send className="h-4 w-4" /><span className="text-xs font-semibold uppercase tracking-[.16em]">Create platform post</span></div><form className="mt-5 space-y-4" onSubmit={submit}><ProjectPicker projectId={projectId} onChange={setProjectId} /><label className="block"><span className="mb-1.5 block text-xs text-slate-400">Platform</span><select value={platform} onChange={e => setPlatform(e.target.value as typeof platform)} className="h-10 w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 text-sm capitalize text-white outline-none">{platforms.map(item => <option value={item} key={item}>{item}</option>)}</select></label><label className="block"><span className="mb-1.5 block text-xs text-slate-400">Title</span><Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Platform-specific title" className="border-white/10 bg-slate-950/60 text-white placeholder:text-slate-600" /></label><label className="block"><span className="mb-1.5 block text-xs text-slate-400">Post copy</span><Textarea value={copy} onChange={e => setCopy(e.target.value)} placeholder="Caption, description, chapters, or hashtags…" className="min-h-24 border-white/10 bg-slate-950/60 text-white placeholder:text-slate-600" /></label><label className="block"><span className="mb-1.5 block text-xs text-slate-400">Schedule (optional)</span><Input type="datetime-local" value={scheduledFor} onChange={e => setScheduledFor(e.target.value)} className="border-white/10 bg-slate-950/60 text-white" /></label><Button disabled={!projectId || create.isPending} className="w-full bg-cyan-300 text-slate-950 hover:bg-cyan-200">{create.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CalendarClock className="mr-2 h-4 w-4" />}Save publishing plan</Button></form></CardContent></Card><div className="rounded-2xl border border-amber-200/12 bg-amber-200/[.04] p-4 text-xs leading-5 text-slate-500"><ShieldCheck className="mb-2 h-4 w-4 text-amber-100" />Scheduled plans remain in an approval-required state until a permitted social-account adapter is connected and a reviewer approves the post.</div></aside>
-      <main className="space-y-5"><Card className="border-white/7 bg-white/[.025] shadow-none"><CardContent className="p-0"><div className="flex items-center justify-between border-b border-white/7 p-5"><div><h2 className="font-medium text-white">Connected accounts</h2><p className="mt-1 text-xs text-slate-500">Official OAuth connections appear here after setup.</p></div><span className="rounded-full bg-slate-300/8 px-2.5 py-1 text-[10px] text-slate-400">{accounts.data?.filter(account => account.connectionStatus === "connected").length ?? 0} connected</span></div>{accounts.data?.length ? <div className="divide-y divide-white/6">{accounts.data.map(account => <div className="flex items-center gap-3 p-5" key={account.id}><div className="grid h-9 w-9 place-items-center rounded-xl bg-violet-400/12"><Send className="h-4 w-4 text-violet-200" /></div><div className="flex-1"><p className="text-sm font-medium capitalize text-slate-200">{account.accountName}</p><p className="mt-0.5 text-xs capitalize text-slate-500">{account.platform} · {account.connectionStatus.replace(/_/g, " ")}</p></div>{account.connectionStatus === "connected" ? <CheckCircle2 className="h-4 w-4 text-emerald-300" /> : <CircleAlert className="h-4 w-4 text-amber-100" />}</div>)}</div> : <div className="grid min-h-40 place-items-center text-center"><div><CircleAlert className="mx-auto h-5 w-5 text-slate-600" /><p className="mt-3 text-sm text-slate-500">No official accounts are connected.</p><p className="mt-1 text-xs text-slate-600">Direct posting remains safely unavailable.</p></div></div>}</CardContent></Card><Card className="border-white/7 bg-white/[.025] shadow-none"><CardContent className="p-0"><div className="border-b border-white/7 p-5"><h2 className="font-medium text-white">Publishing plans</h2><p className="mt-1 text-xs text-slate-500">Drafts and schedules with transparent approval state.</p></div><div className="divide-y divide-white/6">{posts.data?.length ? posts.data.map(post => <div className="flex gap-4 p-5" key={post.id}><div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-cyan-300/10"><CalendarClock className="h-4 w-4 text-cyan-200" /></div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><p className="truncate text-sm font-medium text-slate-200">{post.title || "Untitled platform post"}</p><span className={`rounded-full px-2.5 py-1 text-[10px] capitalize ${post.status === "awaiting_approval" ? "bg-amber-200/10 text-amber-100" : "bg-slate-300/8 text-slate-300"}`}>{post.status.replace(/_/g, " ")}</span></div><p className="mt-1 text-xs capitalize text-slate-500">{post.platform}{post.scheduledFor ? ` · planned for ${new Date(post.scheduledFor).toLocaleString()}` : " · unscheduled draft"}</p>{post.copy && <p className="mt-3 line-clamp-2 text-xs leading-5 text-slate-400">{post.copy}</p>}</div></div>) : <div className="grid min-h-56 place-items-center text-center"><div><Send className="mx-auto h-5 w-5 text-slate-600" /><p className="mt-3 text-sm text-slate-500">No publishing plans yet.</p></div></div>}</div></CardContent></Card></main></div></div>; }
+type Platform = (typeof platforms)[number];
+type CalendarMode = "calendar" | "agenda";
+
+const platformLabels: Record<Platform, string> = { youtube: "YouTube", tiktok: "TikTok", facebook: "Facebook", instagram: "Instagram", linkedin: "LinkedIn", x: "X" };
+const platformColors: Record<Platform, string> = { youtube: "bg-red-300/15 text-red-100", tiktok: "bg-cyan-300/15 text-cyan-100", facebook: "bg-blue-300/15 text-blue-100", instagram: "bg-pink-300/15 text-pink-100", linkedin: "bg-sky-300/15 text-sky-100", x: "bg-slate-300/15 text-slate-100" };
+
+export default function Publishing() {
+  const { activeWorkspaceId } = useWorkspace();
+  const [projectId, setProjectId] = useState<number | null>(null);
+  const [platform, setPlatform] = useState<Platform>("youtube");
+  const [title, setTitle] = useState("");
+  const [copy, setCopy] = useState("");
+  const [scheduledFor, setScheduledFor] = useState("");
+  const [mode, setMode] = useState<CalendarMode>("calendar");
+  const [calendarCursor, setCalendarCursor] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+
+  const posts = trpc.production.social.listPosts.useQuery({ workspaceId: activeWorkspaceId ?? 0 }, { enabled: Boolean(activeWorkspaceId) });
+  const accounts = trpc.production.social.listAccounts.useQuery({ workspaceId: activeWorkspaceId ?? 0 }, { enabled: Boolean(activeWorkspaceId) });
+  const create = trpc.production.social.createPost.useMutation();
+  const adapt = trpc.production.script.generatePlatformCopy.useMutation();
+
+  const scheduledPosts = useMemo(() => (posts.data ?? []).filter(post => post.scheduledFor).sort((a, b) => new Date(a.scheduledFor!).getTime() - new Date(b.scheduledFor!).getTime()), [posts.data]);
+  const monthLabel = calendarCursor.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+  const calendarDays = useMemo(() => buildCalendarDays(calendarCursor), [calendarCursor]);
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!projectId) return toast.error("Select a project first.");
+    try {
+      await create.mutateAsync({ projectId, platform, title: title || undefined, copy: copy || undefined, scheduledFor: scheduledFor ? new Date(scheduledFor) : undefined });
+      await posts.refetch();
+      setTitle("");
+      setCopy("");
+      setScheduledFor("");
+      toast.success(scheduledFor ? "Approval-required publishing plan created." : "Platform-specific draft created.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not create publishing plan.");
+    }
+  };
+
+  const generateAdaptation = async () => {
+    if (!projectId) return toast.error("Select a project before generating platform copy.");
+    try {
+      const generated = await adapt.mutateAsync({ projectId, platform, language: "en" });
+      setTitle(generated.title);
+      setCopy([generated.caption, generated.hashtags.join(" ")].filter(Boolean).join("\n\n"));
+      toast.success(`${platformLabels[platform]} adaptation generated for review.`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not generate platform copy.");
+    }
+  };
+
+  return (
+    <div className="min-h-full bg-[#0b1020]">
+      <PageHeader eyebrow="Distribution" title="Publishing control room" description="Adapt each production for its destination, review its provenance, and reserve an approval-aware publishing slot." />
+      <div className="mx-auto max-w-[1600px] space-y-6 p-5 md:p-8">
+        <section className="grid gap-6 xl:grid-cols-[390px_minmax(0,1fr)]">
+          <Card className="border-white/7 bg-white/[.035] shadow-none">
+            <CardContent className="p-5">
+              <div className="flex items-center gap-2 text-cyan-200"><FilePenLine className="h-4 w-4" /><span className="text-xs font-semibold uppercase tracking-[.16em]">Platform adaptation studio</span></div>
+              <p className="mt-2 text-xs leading-5 text-slate-500">Generate a governed platform draft from the selected script, then edit it before creating a reviewable plan.</p>
+              <form className="mt-5 space-y-4" onSubmit={submit}>
+                <ProjectPicker projectId={projectId} onChange={setProjectId} />
+                <label className="block"><span className="mb-1.5 block text-xs text-slate-400">Destination</span><select value={platform} onChange={event => setPlatform(event.target.value as Platform)} className="h-10 w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 text-sm text-white outline-none">{platforms.map(item => <option value={item} key={item}>{platformLabels[item]}</option>)}</select></label>
+                <Button type="button" variant="outline" disabled={!projectId || adapt.isPending} onClick={generateAdaptation} className="w-full border-violet-200/25 bg-violet-300/7 text-violet-100 hover:bg-violet-300/14">{adapt.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}Generate platform adaptation</Button>
+                <div className="rounded-lg border border-violet-200/12 bg-violet-300/[.035] p-3 text-[11px] leading-4 text-slate-400"><span className="font-medium text-violet-100">AI-generated draft boundary.</span> Generated title, caption, and hashtags remain editable and must be reviewed before a connected-account dispatch can occur.</div>
+                <label className="block"><span className="mb-1.5 block text-xs text-slate-400">Title</span><Input value={title} onChange={event => setTitle(event.target.value)} placeholder={`${platformLabels[platform]} title`} className="border-white/10 bg-slate-950/60 text-white placeholder:text-slate-600" /></label>
+                <label className="block"><span className="mb-1.5 block text-xs text-slate-400">Caption / description</span><Textarea value={copy} onChange={event => setCopy(event.target.value)} placeholder="Caption, description, chapters, or hashtags…" className="min-h-32 border-white/10 bg-slate-950/60 text-white placeholder:text-slate-600" /></label>
+                <label className="block"><span className="mb-1.5 block text-xs text-slate-400">Local schedule time (optional)</span><Input type="datetime-local" value={scheduledFor} onChange={event => setScheduledFor(event.target.value)} className="border-white/10 bg-slate-950/60 text-white" /></label>
+                <Button disabled={!projectId || create.isPending} className="w-full bg-cyan-300 text-slate-950 hover:bg-cyan-200">{create.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CalendarClock className="mr-2 h-4 w-4" />}Save review-ready plan</Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card className="border-white/7 bg-white/[.025] shadow-none">
+            <CardContent className="p-0">
+              <div className="flex flex-col gap-4 border-b border-white/7 p-5 md:flex-row md:items-center md:justify-between">
+                <div><h2 className="font-medium text-white">Content calendar</h2><p className="mt-1 text-xs text-slate-500">A shared agenda for review-ready drafts, approval holds, and scheduled distribution.</p></div>
+                <div className="flex items-center gap-2"><Button type="button" size="icon" variant="outline" aria-label="Previous month" onClick={() => setCalendarCursor(current => new Date(current.getFullYear(), current.getMonth() - 1, 1))} className="border-white/10 text-slate-200"><ChevronLeft className="h-4 w-4" /></Button><span className="min-w-32 text-center text-sm font-medium text-slate-200">{monthLabel}</span><Button type="button" size="icon" variant="outline" aria-label="Next month" onClick={() => setCalendarCursor(current => new Date(current.getFullYear(), current.getMonth() + 1, 1))} className="border-white/10 text-slate-200"><ChevronRight className="h-4 w-4" /></Button><div className="ml-2 flex rounded-lg border border-white/10 bg-slate-950/50 p-1"><Button type="button" size="sm" variant={mode === "calendar" ? "secondary" : "ghost"} aria-pressed={mode === "calendar"} onClick={() => setMode("calendar")} className="h-7 px-2 text-xs"><CalendarDays className="mr-1 h-3.5 w-3.5" />Calendar</Button><Button type="button" size="sm" variant={mode === "agenda" ? "secondary" : "ghost"} aria-pressed={mode === "agenda"} onClick={() => setMode("agenda")} className="h-7 px-2 text-xs"><LayoutList className="mr-1 h-3.5 w-3.5" />Agenda</Button></div></div>
+              </div>
+              {mode === "calendar" ? <CalendarGrid days={calendarDays} posts={scheduledPosts} /> : <Agenda posts={scheduledPosts} />}
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="grid gap-6 lg:grid-cols-2">
+          <Card className="border-white/7 bg-white/[.025] shadow-none"><CardContent className="p-0"><div className="flex items-center justify-between border-b border-white/7 p-5"><div><h2 className="font-medium text-white">Connection readiness</h2><p className="mt-1 text-xs text-slate-500">Only connected official accounts can enter dispatch after approval.</p></div><span className="rounded-full bg-slate-300/8 px-2.5 py-1 text-[10px] text-slate-400">{accounts.data?.filter(account => account.connectionStatus === "connected").length ?? 0} connected</span></div>{accounts.data?.length ? <div className="divide-y divide-white/6">{accounts.data.map(account => <div className="flex items-center gap-3 p-5" key={account.id}><div className="grid h-9 w-9 place-items-center rounded-xl bg-violet-400/12"><Send className="h-4 w-4 text-violet-200" /></div><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium capitalize text-slate-200">{account.accountName}</p><p className="mt-0.5 text-xs capitalize text-slate-500">{account.platform} · {account.connectionStatus.replace(/_/g, " ")}</p></div>{account.connectionStatus === "connected" ? <CheckCircle2 className="h-4 w-4 text-emerald-300" /> : <CircleAlert className="h-4 w-4 text-amber-100" />}</div>)}</div> : <div className="grid min-h-40 place-items-center text-center"><div><CircleAlert className="mx-auto h-5 w-5 text-slate-600" /><p className="mt-3 text-sm text-slate-500">No official accounts are connected.</p><p className="mt-1 text-xs text-slate-600">You can still prepare and review plans safely.</p></div></div>}</CardContent></Card>
+          <Card className="border-white/7 bg-white/[.025] shadow-none"><CardContent className="p-0"><div className="flex items-center justify-between border-b border-white/7 p-5"><div><h2 className="font-medium text-white">Review queue</h2><p className="mt-1 text-xs text-slate-500">Plans remain transparent about approval and connection prerequisites.</p></div><ShieldCheck className="h-5 w-5 text-amber-100" /></div><div className="divide-y divide-white/6">{posts.data?.length ? posts.data.slice(0, 6).map(post => <PlanRow post={post} key={post.id} />) : <div className="grid min-h-40 place-items-center text-center"><div><ShieldCheck className="mx-auto h-5 w-5 text-slate-600" /><p className="mt-3 text-sm text-slate-500">No plans are awaiting review.</p></div></div>}</div></CardContent></Card>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function CalendarGrid({ days, posts }: { days: Date[]; posts: Array<{ id: number; platform: Platform; title: string | null; status: string; scheduledFor: Date | string | null }> }) {
+  const today = new Date();
+  return <div className="p-3"><div className="grid grid-cols-7 border-b border-white/7 pb-2 text-center text-[10px] font-medium uppercase tracking-[.12em] text-slate-500">{["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(day => <span key={day}>{day}</span>)}</div><div className="grid grid-cols-7">{days.map(day => { const sameMonth = day.getMonth() === days[15].getMonth(); const isToday = sameDay(day, today); const dayPosts = posts.filter(post => post.scheduledFor && sameDay(new Date(post.scheduledFor), day)); return <div key={day.toISOString()} className={`min-h-28 border-b border-r border-white/6 p-2 ${sameMonth ? "bg-transparent" : "bg-slate-950/20"}`}><span className={`grid h-6 w-6 place-items-center rounded-full text-xs ${isToday ? "bg-cyan-300 text-slate-950" : sameMonth ? "text-slate-300" : "text-slate-600"}`}>{day.getDate()}</span><div className="mt-2 space-y-1">{dayPosts.slice(0, 2).map(post => <div className={`truncate rounded px-1.5 py-1 text-[10px] ${platformColors[post.platform]}`} title={post.title ?? "Untitled platform post"} key={post.id}>{platformLabels[post.platform]} · {post.title || "Draft"}</div>)}{dayPosts.length > 2 && <p className="px-1 text-[10px] text-slate-500">+{dayPosts.length - 2} more</p>}</div></div>; })}</div></div>;
+}
+
+function Agenda({ posts }: { posts: Array<{ id: number; platform: Platform; title: string | null; copy: string | null; status: string; scheduledFor: Date | string | null }> }) {
+  return posts.length ? <div className="divide-y divide-white/6">{posts.map(post => <PlanRow post={post} key={post.id} />)}</div> : <div className="grid min-h-72 place-items-center text-center"><div><CalendarDays className="mx-auto h-6 w-6 text-slate-600" /><p className="mt-3 text-sm text-slate-500">No scheduled plans in the current agenda.</p><p className="mt-1 text-xs text-slate-600">Create an approval-ready plan with a date to add it here.</p></div></div>;
+}
+
+function PlanRow({ post }: { post: { id: number; platform: Platform; title: string | null; copy: string | null; status: string; scheduledFor: Date | string | null } }) {
+  const tone = post.status === "awaiting_approval" ? "bg-amber-200/10 text-amber-100" : post.status === "published" ? "bg-emerald-300/10 text-emerald-100" : "bg-slate-300/8 text-slate-300";
+  return <div className="flex gap-4 p-5"><div className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${platformColors[post.platform]}`}><Send className="h-4 w-4" /></div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center justify-between gap-2"><p className="truncate text-sm font-medium text-slate-200">{post.title || "Untitled platform post"}</p><span className={`rounded-full px-2.5 py-1 text-[10px] capitalize ${tone}`}>{post.status.replace(/_/g, " ")}</span></div><p className="mt-1 text-xs text-slate-500">{platformLabels[post.platform]}{post.scheduledFor ? ` · ${new Date(post.scheduledFor).toLocaleString()}` : " · unscheduled draft"}</p>{post.copy && <p className="mt-3 line-clamp-2 text-xs leading-5 text-slate-400">{post.copy}</p>}</div></div>;
+}
+
+function buildCalendarDays(cursor: Date) {
+  const start = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+  start.setDate(start.getDate() - start.getDay());
+  return Array.from({ length: 42 }, (_, index) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + index));
+}
+
+function sameDay(left: Date, right: Date) { return left.getFullYear() === right.getFullYear() && left.getMonth() === right.getMonth() && left.getDate() === right.getDate(); }

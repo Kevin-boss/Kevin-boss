@@ -27,6 +27,8 @@ export default function VoiceCaptions() {
   const [selectedVoiceId, setSelectedVoiceId] = useState<number | null>(null);
   const [speechText, setSpeechText] = useState("A short approved voice sample for this production.");
   const [speechResult, setSpeechResult] = useState<{ url: string; assetId: number } | null>(null);
+  const [synthesisSpeed, setSynthesisSpeed] = useState("1");
+  const [deliveryEmotion, setDeliveryEmotion] = useState("");
 
   const voices = trpc.production.voice.list.useQuery(
     { workspaceId: activeWorkspaceId ?? 0, language, gender, tone: tone || undefined, accent: accent || undefined, speed: speed || undefined, emotion: emotion || undefined },
@@ -56,7 +58,8 @@ export default function VoiceCaptions() {
     if (!selectedVoice.providerId) return toast.error("The selected voice does not have a ready approved TTS provider.");
     if (!speechText.trim()) return toast.error("Enter text for the approved voice.");
     try {
-      const value = await synthesize.mutateAsync({ projectId, providerId: selectedVoice.providerId, voiceId: selectedVoice.providerVoiceId, text: speechText.trim(), language });
+      const usesPublicModelDefaultVoice = selectedVoice.provider === "huggingface";
+      const value = await synthesize.mutateAsync({ projectId, providerId: selectedVoice.providerId, voiceId: selectedVoice.providerVoiceId, text: speechText.trim(), language, speed: usesPublicModelDefaultVoice ? 1 : Number(synthesisSpeed), emotion: usesPublicModelDefaultVoice ? undefined : deliveryEmotion.trim() || undefined });
       setSpeechResult(value);
       toast.success("Approved voice audio is ready for review.");
     } catch (error) {
@@ -100,7 +103,8 @@ export default function VoiceCaptions() {
                   {selectedVoice ? <><span className="font-medium text-slate-200">{selectedVoice.name}</span><span className="block pt-1">{selectedVoice.providerId ? `Ready provider #${selectedVoice.providerId}` : "No enabled commercial-use provider matches this voice yet."}</span></> : "Choose an approved voice from the catalog to enable synthesis."}
                 </div>
                 <label className="block"><span className="mb-1.5 block text-xs text-slate-400">Narration text</span><textarea value={speechText} onChange={event => setSpeechText(event.target.value)} maxLength={12000} className="min-h-28 w-full rounded-lg border border-white/10 bg-slate-950/60 p-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-300/60" /></label>
-                {selectedVoice?.provider === "huggingface" && <p className="rounded-lg bg-cyan-300/7 p-2 text-[11px] leading-4 text-cyan-100">This public-provider route uses the registered model-default voice. Private-worker catalog controls are not simulated here.</p>}
+                {selectedVoice && selectedVoice.provider !== "huggingface" && <div className="grid grid-cols-2 gap-3 rounded-lg border border-violet-200/12 bg-violet-300/[.035] p-3"><label className="block"><span className="mb-1.5 block text-[11px] text-slate-400">Delivery speed</span><select aria-label="Narration delivery speed" value={synthesisSpeed} onChange={event => setSynthesisSpeed(event.target.value)} className="h-9 w-full rounded-md border border-white/10 bg-slate-950/60 px-2 text-xs text-white outline-none"><option value="0.8">Measured · 0.8×</option><option value="0.9">Calm · 0.9×</option><option value="1">Natural · 1.0×</option><option value="1.1">Energetic · 1.1×</option><option value="1.2">Fast · 1.2×</option></select></label><label className="block"><span className="mb-1.5 block text-[11px] text-slate-400">Delivery direction</span><Input aria-label="Narration delivery emotion" value={deliveryEmotion} onChange={event => setDeliveryEmotion(event.target.value)} maxLength={80} placeholder="Warm, confident…" className="h-9 border-white/10 bg-slate-950/60 text-xs text-white placeholder:text-slate-600" /></label><p className="col-span-2 text-[10px] leading-4 text-slate-500">Controls are sent only to an approved private worker. Consent and commercial-use enforcement still apply to every request.</p></div>}
+                {selectedVoice?.provider === "huggingface" && <p className="rounded-lg bg-cyan-300/7 p-2 text-[11px] leading-4 text-cyan-100">This public-provider route uses the registered model-default voice. It intentionally ignores private-worker delivery controls.</p>}
                 <Button disabled={!projectId || !selectedVoice?.providerId || !speechText.trim() || synthesize.isPending} className="w-full bg-violet-300 text-slate-950 hover:bg-violet-200">{synthesize.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Volume2 className="mr-2 h-4 w-4" />}Synthesize approved voice</Button>
               </form>
               {speechResult && <div className="mt-4 rounded-lg border border-emerald-300/20 bg-emerald-300/5 p-3"><div className="mb-2 flex items-center gap-2 text-xs text-emerald-100"><CheckCircle2 className="h-4 w-4" />Audio asset #{speechResult.assetId} is ready</div><audio controls className="w-full" src={speechResult.url}>Your browser cannot play this audio preview.</audio></div>}

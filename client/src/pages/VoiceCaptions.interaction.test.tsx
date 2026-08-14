@@ -76,7 +76,7 @@ describe("Voice and Captions creator interactions", () => {
     await act(async () => chooseButton.click());
     const synthesizeButton = Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Synthesize approved voice"))!;
     await act(async () => { synthesizeButton.click(); await Promise.resolve(); });
-    expect(mocks.synthesize.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ projectId: 9, providerId: 55, voiceId: "hf-default", language: "en" }));
+    expect(mocks.synthesize.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ projectId: 9, providerId: 55, voiceId: "hf-default", language: "en", speed: 1, emotion: undefined }));
     expect(container.querySelector("audio")?.getAttribute("src")).toBe("https://media.test/approved-voice.mp3");
     expect(toast.success).toHaveBeenCalledWith("Approved voice audio is ready for review.");
   });
@@ -89,6 +89,24 @@ describe("Voice and Captions creator interactions", () => {
     await act(async () => { synthesizeButton.click(); await Promise.resolve(); });
     expect(toast.error).toHaveBeenCalledWith("Provider rejected request");
     expect(container.textContent).toContain("Kokoro public default");
+  });
+
+  it("passes catalog-supported private-worker delivery controls while keeping the approved voice selected", async () => {
+    mocks.voices = [{ ...approvedVoice, name: "Approved private Kokoro voice", provider: "kokoro", providerVoiceId: "af_bella", providerId: 56 }];
+    await act(async () => root.unmount());
+    root = createRoot(container);
+    await renderAndSelectProject();
+    mocks.synthesize.mutateAsync.mockResolvedValue({ assetId: 72, url: "https://media.test/private-voice.wav" });
+    await act(async () => Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Choose voice"))?.click());
+    const select = container.querySelector('[aria-label="Narration delivery speed"]') as HTMLSelectElement;
+    const selectSetter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!;
+    await act(async () => { selectSetter.call(select, "1.1"); select.dispatchEvent(new Event("change", { bubbles: true })); });
+    const emotion = container.querySelector('[aria-label="Narration delivery emotion"]') as HTMLInputElement;
+    const inputSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+    await act(async () => { inputSetter.call(emotion, "warm and confident"); emotion.dispatchEvent(new Event("input", { bubbles: true })); });
+    await act(async () => { Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Synthesize approved voice"))?.click(); await Promise.resolve(); });
+    expect(mocks.synthesize.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ providerId: 56, voiceId: "af_bella", speed: 1.1, emotion: "warm and confident" }));
+    expect(container.querySelector("audio")?.getAttribute("src")).toBe("https://media.test/private-voice.wav");
   });
 
   it("disables transcription submission while ASR is pending", async () => {

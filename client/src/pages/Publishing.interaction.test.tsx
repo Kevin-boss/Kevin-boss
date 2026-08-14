@@ -4,12 +4,12 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  posts: { data: [] as any[], refetch: vi.fn() }, accounts: { data: [] }, create: { mutateAsync: vi.fn(), isPending: false },
+  posts: { data: [] as any[], refetch: vi.fn() }, accounts: { data: [] }, create: { mutateAsync: vi.fn(), isPending: false }, adapt: { mutateAsync: vi.fn(), isPending: false },
 }));
 vi.mock("@/hooks/useWorkspace", () => ({ useWorkspace: () => ({ activeWorkspaceId: 3 }) }));
 vi.mock("@/components/ProjectPicker", () => ({ ProjectPicker: ({ onChange }: { onChange: (projectId: number) => void }) => <button type="button" onClick={() => onChange(9)}>Select test project</button> }));
 vi.mock("@/components/PageHeader", () => ({ PageHeader: ({ title }: { title: string }) => <h1>{title}</h1> }));
-vi.mock("@/lib/trpc", () => ({ trpc: { production: { social: { listPosts: { useQuery: () => mocks.posts }, listAccounts: { useQuery: () => mocks.accounts }, createPost: { useMutation: () => mocks.create } } } } }));
+vi.mock("@/lib/trpc", () => ({ trpc: { production: { script: { generatePlatformCopy: { useMutation: () => mocks.adapt } }, social: { listPosts: { useQuery: () => mocks.posts }, listAccounts: { useQuery: () => mocks.accounts }, createPost: { useMutation: () => mocks.create } } } } }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 import Publishing from "./Publishing";
@@ -18,7 +18,7 @@ import { toast } from "sonner";
 describe("Publishing", () => {
   let root: Root | undefined;
   let container: HTMLDivElement | undefined;
-  afterEach(async () => { await act(async () => root?.unmount()); container?.remove(); root = undefined; container = undefined; vi.clearAllMocks(); mocks.create.isPending = false; mocks.posts.data = []; mocks.accounts.data = []; });
+  afterEach(async () => { await act(async () => root?.unmount()); container?.remove(); root = undefined; container = undefined; vi.clearAllMocks(); mocks.create.isPending = false; mocks.adapt.isPending = false; mocks.posts.data = []; mocks.accounts.data = []; });
 
   it("creates an approval-required scheduled plan without a connected account", async () => {
     vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
@@ -36,7 +36,30 @@ describe("Publishing", () => {
     await act(async () => { container?.querySelector("form")?.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })); await Promise.resolve(); });
     expect(mocks.create.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ projectId: 9, platform: "youtube", title: "Launch plan", copy: "A reviewable caption", scheduledFor: expect.any(Date) }));
     expect(mocks.posts.refetch).toHaveBeenCalled();
-    expect(toast.success).toHaveBeenCalledWith("Approval-required schedule plan created.");
+    expect(toast.success).toHaveBeenCalledWith("Approval-required publishing plan created.");
     expect(container.textContent).toContain("awaiting approval");
+  });
+
+  it("generates a governed platform adaptation after a project is selected", async () => {
+    vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+    mocks.adapt.mutateAsync.mockResolvedValue({ title: "A YouTube-ready title", caption: "A reviewed caption", hashtags: ["#content", "#review"] });
+    container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container);
+    await act(async () => root?.render(<Publishing />));
+    await act(async () => Array.from(container!.querySelectorAll("button")).find(button => button.textContent?.includes("Select test project"))?.click());
+    await act(async () => Array.from(container!.querySelectorAll("button")).find(button => button.textContent?.includes("Generate platform adaptation"))?.click());
+    expect(mocks.adapt.mutateAsync).toHaveBeenCalledWith({ projectId: 9, platform: "youtube", language: "en" });
+    expect((container.querySelectorAll("input")[0] as HTMLInputElement).value).toBe("A YouTube-ready title");
+    expect(container.querySelector("textarea")?.value).toContain("#content");
+    expect(toast.success).toHaveBeenCalledWith("YouTube adaptation generated for review.");
+  });
+
+  it("switches the schedule surface from the monthly calendar to a date-ordered agenda", async () => {
+    vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+    mocks.posts.data = [{ id: 5, title: "Reviewed release", copy: "Ready for review", platform: "linkedin", status: "awaiting_approval", scheduledFor: new Date("2026-08-20T09:30:00") }];
+    container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container);
+    await act(async () => root?.render(<Publishing />));
+    await act(async () => Array.from(container!.querySelectorAll("button")).find(button => button.textContent?.includes("Agenda"))?.click());
+    expect(container.textContent).toContain("Reviewed release");
+    expect(container.textContent).toContain("LinkedIn");
   });
 });
