@@ -1,14 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import { appRouter } from "./routers";
 import { getDb } from "./db";
-import { createJob, requireProjectAccess, updateJob } from "./platform";
+import { createJob, recordAudit, requireProjectAccess, requireWorkspaceAccess, updateJob } from "./platform";
 import { storagePut } from "./storage";
 import { voiceConsents, voices } from "../drizzle/schema";
 
 vi.mock("./db", () => ({ getDb: vi.fn() }));
 vi.mock("./platform", async importOriginal => {
   const actual = await importOriginal<typeof import("./platform")>();
-  return { ...actual, createJob: vi.fn(), recordAudit: vi.fn(), requireProjectAccess: vi.fn(), updateJob: vi.fn() };
+  return { ...actual, createJob: vi.fn(), recordAudit: vi.fn(), requireProjectAccess: vi.fn(), requireWorkspaceAccess: vi.fn(), updateJob: vi.fn() };
 });
 vi.mock("./storage", () => ({ storagePut: vi.fn(), storageGetSignedUrl: vi.fn() }));
 
@@ -112,6 +112,38 @@ describe("provider-backed production procedures", () => {
     expect(result).toMatchObject({ jobId: 104, assetId: 58, url: "https://local.test/voice.wav" });
     expect(fetch).toHaveBeenCalledWith("https://local.test/tts", expect.objectContaining({ method: "POST" }));
     expect(JSON.parse(vi.mocked(fetch).mock.calls[0]![1]!.body as string)).toMatchObject({ input: "Hello", response_format: "wav" });
+  });
+
+  it("persists administrator-verified commercial consent before a voice can be used by the private worker", async () => {
+    vi.clearAllMocks();
+    vi.mocked(requireWorkspaceAccess).mockResolvedValue({ workspace: { id: 3 } } as any);
+    vi.mocked(recordAudit).mockResolvedValue(undefined as any);
+    const voice = { id: 12, workspaceId: 3, provider: "kokoro", providerVoiceId: "af_heart", commercialUse: "allowed" as const };
+    const insertValues = vi.fn().mockResolvedValue([{ insertId: 91 }]);
+    vi.mocked(getDb).mockResolvedValue({ select: () => ({ from: (table: unknown) => ({ where: () => table === voiceConsents ? ({ orderBy: () => queryRows([]) }) : queryRows([voice]) }) }), insert: () => ({ values: insertValues }) } as any);
+    const result = await appRouter.createCaller(ctx).production.voice.recordConsent({ workspaceId: 3, voiceId: 12, status: "verified", approvedUseScope: "commercial_tts", evidenceReference: "consent/af-heart.pdf" });
+    expect(result).toMatchObject({ voiceId: 12, status: "verified", approvedUseScope: "commercial_tts", verifiedByUserId: 7 });
+    expect(insertValues).toHaveBeenCalledWith(expect.objectContaining({ voiceId: 12, workspaceId: 3, evidenceReference: "consent/af-heart.pdf" }));
+    expect(recordAudit).toHaveBeenCalledWith(expect.objectContaining({ action: "voice.consent_recorded" }));
+  });
+
+  it("blocks synthesis before consent and permits it after the supported consent-recording flow", async () => {
+    vi.clearAllMocks();
+    vi.mocked(requireWorkspaceAccess).mockResolvedValue({ workspace: { id: 3 } } as any);
+    vi.mocked(requireProjectAccess).mockResolvedValue({ project: { id: 9, workspaceId: 3 } } as any);
+    vi.mocked(createJob).mockResolvedValue(104);
+    vi.mocked(updateJob).mockResolvedValue(undefined as any);
+    vi.mocked(storagePut).mockResolvedValue({ key: "tts/voice.wav", url: "https://local.test/voice.wav" });
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ audioBase64: Buffer.from("audio").toString("base64"), mimeType: "audio/wav" }), { status: 200 })));
+    const voice = { id: 12, workspaceId: 3, provider: ttsProvider.provider, providerVoiceId: "voice-1", commercialUse: "allowed" as const };
+    const verifiedConsent = { voiceId: 12, workspaceId: 3, status: "verified" as const, approvedUseScope: "commercial_tts" as const, evidenceReference: "consent/voice-1.pdf", verifiedByUserId: 7, verifiedAt: new Date() };
+    let consentRecorded = false;
+    const insertValues = vi.fn().mockImplementation(async (value: Record<string, unknown>) => { if (value.voiceId === 12) consentRecorded = true; return [{ insertId: 58 }]; });
+    vi.mocked(getDb).mockResolvedValue({ select: () => ({ from: (table: unknown) => ({ where: () => table === voices ? queryRows([voice]) : table === voiceConsents ? Object.assign(queryRows(consentRecorded ? [verifiedConsent] : []), { orderBy: () => queryRows(consentRecorded ? [verifiedConsent] : []) }) : queryRows([ttsProvider]) }) }), insert: () => ({ values: insertValues }) } as any);
+    const caller = appRouter.createCaller(ctx);
+    await expect(caller.production.voice.synthesize({ projectId: 9, providerId: 5, voiceId: "voice-1", text: "Hello", language: "en" })).rejects.toThrow(/consent evidence/i);
+    await caller.production.voice.recordConsent({ workspaceId: 3, voiceId: 12, status: "verified", approvedUseScope: "commercial_tts", evidenceReference: "consent/voice-1.pdf" });
+    await expect(caller.production.voice.synthesize({ projectId: 9, providerId: 5, voiceId: "voice-1", text: "Hello", language: "en" })).resolves.toMatchObject({ assetId: 58 });
   });
 
   it("rejects an explicitly selected paid-only TTS provider before synthesis", async () => {

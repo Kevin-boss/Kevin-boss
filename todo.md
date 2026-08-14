@@ -62,9 +62,12 @@
 - [ ] Configure and validate TTS credentials individually after the approved TTS provider is selected.
 - [x] Research and document a current self-hosted natural-voice TTS deployment path before requesting its private endpoint or credentials.
 - [x] Add a Kokoro-compatible private TTS adapter contract with voice-consent and provider provenance safeguards, plus controlled integration coverage.
-- [ ] Persist explicit voice consent and approved-use scope, then reject synthesis unless the selected voice has verified commercial rights and consent.
-- [ ] Add an admin-supported voice-consent recording procedure and prove synthesis succeeds only after verified commercial consent is persisted through that flow.
+- [x] Persist explicit voice consent and approved-use scope, then reject synthesis unless the selected voice has verified commercial rights and consent.
+- [x] Add an admin-supported voice-consent recording procedure and prove synthesis succeeds only after verified commercial consent is persisted through that flow.
 - [x] Incorporate the official Kokoro inference tooling as a private worker package and document its model-weight deployment boundary.
+- [x] Add direct procedure-level coverage for administrator-recorded consent and the required before/after synthesis safety boundary.
+- [x] Add one end-to-end guarded flow test proving private TTS is blocked before consent is recorded and succeeds after `recordConsent` persists verified commercial consent.
+- [x] Add a deployment-readiness checklist for the private Kokoro worker, including health, authentication, consent, storage, and rollback controls.
 
 ---
 
