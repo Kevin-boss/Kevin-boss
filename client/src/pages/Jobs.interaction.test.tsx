@@ -4,10 +4,10 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
 
-const mocks = vi.hoisted(() => ({ retry: { isPending: false, mutateAsync: vi.fn() }, invalidate: vi.fn() }));
+const mocks = vi.hoisted(() => ({ retry: { isPending: false, mutateAsync: vi.fn() }, invalidate: vi.fn(), isFetching: false }));
 const failedJob = { id: 42, type: "video_render", status: "failed", progress: 40, errorMessage: "Worker timeout", result: null };
 
-vi.mock("@/lib/trpc", () => ({ trpc: { useUtils: () => ({ production: { jobs: { list: { invalidate: mocks.invalidate } } } }), production: { jobs: { list: { useQuery: () => ({ data: [failedJob], isFetching: false }) }, cancel: { useMutation: () => ({ isPending: false, mutateAsync: vi.fn() }) }, retry: { useMutation: () => mocks.retry } }, exports: { download: { useQuery: () => ({ data: null }) } } } } }));
+vi.mock("@/lib/trpc", () => ({ trpc: { useUtils: () => ({ production: { jobs: { list: { invalidate: mocks.invalidate } } } }), production: { jobs: { list: { useQuery: () => ({ data: [failedJob], isFetching: mocks.isFetching }) }, cancel: { useMutation: () => ({ isPending: false, mutateAsync: vi.fn() }) }, retry: { useMutation: () => mocks.retry } }, exports: { download: { useQuery: () => ({ data: null }) } } } } }));
 vi.mock("@/hooks/useWorkspace", () => ({ useWorkspace: () => ({ activeWorkspaceId: 3 }) }));
 vi.mock("@/components/PageHeader", () => ({ PageHeader: ({ title }: { title: string }) => <header>{title}</header> }));
 vi.mock("@/components/ui/button", () => ({ Button: (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props} /> }));
@@ -21,6 +21,7 @@ describe("Jobs retry UI", () => {
   let root: Root;
   beforeEach(async () => {
     vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+    mocks.isFetching = false;
     mocks.retry.mutateAsync.mockReset(); mocks.invalidate.mockReset(); vi.mocked(toast.success).mockReset(); vi.mocked(toast.error).mockReset();
     container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container);
     const { default: Jobs } = await import("./Jobs"); await act(async () => root.render(<Jobs />));
@@ -42,5 +43,14 @@ describe("Jobs retry UI", () => {
     await act(async () => { button.click(); await Promise.resolve(); });
     expect(mocks.retry.mutateAsync).toHaveBeenCalledWith({ jobId: 42 });
     expect(toast.error).toHaveBeenCalledWith("Retry limit reached");
+  });
+
+  it("shows an explicit refresh indicator while the job query is fetching", async () => {
+    await act(async () => root.unmount());
+    mocks.isFetching = true;
+    const { default: Jobs } = await import("./Jobs");
+    root = createRoot(container);
+    await act(async () => root.render(<Jobs />));
+    expect(container.querySelector("svg.animate-spin")).not.toBeNull();
   });
 });
