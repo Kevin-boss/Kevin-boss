@@ -1,0 +1,2 @@
+ALTER TABLE `modelProviders` ADD `costTier` enum('free','paid','metered') DEFAULT 'free' NOT NULL;--> statement-breakpoint
+ALTER TABLE `modelProviders` ADD `selfHosted` enum('yes','no') DEFAULT 'yes' NOT NULL;

@@ -27,11 +27,53 @@
 - [ ] Verify API behavior, responsive UI, loading and error states, build quality, and core interaction flows.
 - [ ] Add explicit research citation records and source-grounded summaries to the research API and workspace.
 - [ ] Implement actual TTS generation and apply all catalog filters for gender, tone, accent, speed, and emotion.
-- [ ] Build official social-account, post, and scheduled-publishing procedures with provider adapters and approval gates.
+- [ ] Build official social-account, post, and scheduled-publishing procedures with provider adapters and approval gates. (Deferred by user; not part of current delivery scope.)
 - [ ] Add plan, usage, notifications, and administrative health procedures and supporting UI.
 - [ ] Add scene editing, scene-level regeneration, research citations, and platform-copy panels to Script Studio.
 - [ ] Add folder/tag and licensing editing controls to the asset library.
-- [ ] Persist editable timeline tracks and scene properties instead of read-only timeline visualization.
-- [ ] Add caption-style controls and complete voice filter interaction in the Voice & Caption workspace.
+- [x] Persist editable timeline tracks and scene properties instead of read-only timeline visualization.
+- [x] Add caption-style controls and complete voice filter interaction in the Voice & Caption workspace.
 - [ ] Add API, integration, and UI flow tests for the implemented production workflows.
 - [x] Document local configuration, implementation limitations, provider setup, and next steps for external credentials and production workers.
+- [x] Continue credential-independent completion before requesting external keys.
+- [ ] Request and validate required external API credentials one at a time, in integration dependency order.
+- [ ] Record credential setup status and provider validation results in project documentation.
+
+---
+
+## Continuation slice
+
+- [x] Add explicit research citation records, source-grounded summaries, and Research workspace display.
+- [x] Add persistent editor track/property mutations and caption styling controls.
+- [x] Add provider-backed TTS boundary and complete voice catalog filtering.
+- [ ] Add approval, notification, usage, and admin-health workflows.
+- [x] Add editable persisted track operations in the Timeline Editor.
+- [x] Implement a private render-worker endpoint boundary with tracked render jobs and safe unavailable states.
+- [ ] Add broad API and UI integration tests for completed production workflows.
+
+## External integration sequence
+
+- [ ] Configure and validate the first required external provider key individually, then record its actual validation result.
+- [ ] Configure and validate social publishing credentials individually after the provider boundary is implemented.
+- [ ] Configure and validate worker/render credentials or private endpoints individually after worker deployment is selected.
+- [ ] Configure and validate TTS credentials individually after the approved TTS provider is selected.
+
+---
+
+## History note
+
+The remaining unchecked items represent work that is not yet complete or requires external credentials, workers, platform approvals, or provider-specific implementation. They must not be reported as finished until validated.
+- [x] Prioritize free-tier, open-source, and self-hostable providers before paid APIs.
+- [x] Prefer local or private-endpoint TTS and rendering boundaries where practical.
+- [x] Do not request an external API key when a validated free or self-hosted alternative exists.
+- [x] Document the selected free-first provider path and any unavoidable credential requirements.
+- [ ] Enforce free/self-hosted provider preference across all registry-driven capability flows, including LLM, image, ASR, video/render, and future adapters.
+- [ ] Add capability-specific provider selection logic that surfaces preferred free/self-hosted providers and blocks paid selection when an approved free alternative exists.
+- [ ] Add automated tests for free-first ordering and paid-provider blocking across supported capabilities.
+- [x] Defer cross-platform publishing, social OAuth, and platform analytics integrations until a later phase.
+- [x] Prioritize downloadable video exports with explicit render completion, signed downloads, and export presets.
+- [x] Add completed-export records and download access to the Jobs and Editor workspaces.
+- [x] Add render-worker callback or completion handling for produced video files.
+- [x] Test export submission, unavailable-worker states, and signed download access.
+- [x] Add completed-export download cards or links to the Jobs workspace.
+- [x] Add verification coverage for export submission, worker-unavailable state, and signed-download access from Editor and Jobs.

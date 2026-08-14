@@ -1,0 +1,22 @@
+import { describe, expect, it } from "vitest";
+import { assertFreeFirstSelection, rankFreeFirst } from "./providerPolicy";
+
+const providers = [
+  { id: 1, costTier: "paid" as const, selfHosted: "no" as const, commercialUse: "allowed" as const, enabled: "yes" as const, capabilities: ["tts", "text"] },
+  { id: 2, costTier: "free" as const, selfHosted: "yes" as const, commercialUse: "allowed" as const, enabled: "yes" as const, capabilities: ["tts"] },
+  { id: 3, costTier: "free" as const, selfHosted: "yes" as const, commercialUse: "review" as const, enabled: "yes" as const, capabilities: ["tts"] },
+];
+
+describe("free-first provider policy", () => {
+  it("ranks an approved free self-hosted provider before paid providers", () => {
+    expect(rankFreeFirst(providers, "tts").map(provider => provider.id)).toEqual([2, 1]);
+  });
+
+  it("filters out disabled, restricted, and unsupported providers", () => {
+    expect(rankFreeFirst(providers, "image")).toEqual([]);
+  });
+
+  it("blocks paid selection when an approved free alternative exists", () => {
+    expect(() => assertFreeFirstSelection(providers[0], providers, "tts")).toThrow(/free approved tts provider/i);
+  });
+});

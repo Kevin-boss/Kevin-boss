@@ -16,6 +16,7 @@ import Jobs from "./pages/Jobs";
 import Workspace from "./pages/Workspace";
 import FoundationPage from "./pages/FoundationPage";
 import Publishing from "./pages/Publishing";
+import ProviderRegistry from "./pages/ProviderRegistry";
 
 function Router() {
   return (
@@ -32,7 +33,7 @@ function Router() {
       <Route path={"/workspace"} component={Workspace} />
       <Route path={"/publish"} component={Publishing} />
       <Route path={"/analytics"}><FoundationPage eyebrow="Intelligence" title="Analytics workspace" description="Performance records are designed to ingest only official platform data. Connect approved accounts to begin synchronizing verified views, watch time, engagement, and publication state." /></Route>
-      <Route path={"/settings"}><FoundationPage eyebrow="System configuration" title="Workspace settings" description="Manage workspace governance, provider configuration, secure integrations, usage policies, and deployment options from the administrative foundation." /></Route>
+      <Route path={"/settings"} component={ProviderRegistry} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch></DashboardLayout>

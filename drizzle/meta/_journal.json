@@ -15,6 +15,34 @@
       "when": 1786669755313,
       "tag": "0001_familiar_midnight",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1786670480609,
+      "tag": "0002_steep_vulture",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1786689635786,
+      "tag": "0003_safe_jane_foster",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1786689896713,
+      "tag": "0004_moaning_hiroim",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1786690565574,
+      "tag": "0005_illegal_pepper_potts",
+      "breakpoints": true
     }
   ]
 }

@@ -26,6 +26,10 @@ Production FFmpeg rendering, open-source TTS deployment, local-model inference, 
 | YouTube, TikTok, and Meta publishing | Obtain official application credentials, configure OAuth redirect URLs, complete any required platform review, and implement the corresponding adapter. |
 | Payment processing | Select and configure a payment provider through the provider boundary; do not put payment logic in the production core. |
 
+## Download-first export scope
+
+Cross-platform publishing and social OAuth are intentionally deferred. The current product exposes export presets for landscape, vertical, and square output; submits versioned video documents to a private render-worker boundary; records completed worker-returned video files as tenant-scoped video assets; and generates signed download URLs only after access checks. A render worker must return a `storageKey` in its JSON response for an export to become downloadable. When no worker endpoint is configured, the application creates a failed job with `RENDER_WORKER_UNAVAILABLE` rather than pretending that a video exists.
+
 ## Next Engineering Steps
 
 The complete implementation backlog is maintained in `todo.md`. The highest-priority remaining work is a worker-based rendering pipeline, actual TTS provider integration, editable persisted timeline tracks, explicit citation outputs, official social adapter procedures, approval-aware schedules, and comprehensive integration tests.

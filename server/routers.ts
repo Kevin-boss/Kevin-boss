@@ -5,6 +5,7 @@ import { publicProcedure, router } from "./_core/trpc";
 import { copilotRouter } from "./routers/copilot";
 import { productionRouter } from "./routers/production";
 import { projectRouter } from "./routers/projects";
+import { providerRouter } from "./routers/providers";
 import { workspaceRouter } from "./routers/workspace";
 
 export const appRouter = router({
@@ -24,6 +25,7 @@ export const appRouter = router({
   project: projectRouter,
   production: productionRouter,
   copilot: copilotRouter,
+  providers: providerRouter,
 });
 
 export type AppRouter = typeof appRouter;
