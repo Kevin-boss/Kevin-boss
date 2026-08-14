@@ -7,7 +7,7 @@ import { ProjectPicker } from "@/components/ProjectPicker";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { trpc } from "@/lib/trpc";
 import { CalendarClock, CheckCircle2, CircleAlert, Loader2, Send, ShieldCheck } from "lucide-react";
-import { FormEvent, useState } from "react";
+import React, { FormEvent, useState } from "react";
 import { toast } from "sonner";
 
 const platforms = ["youtube", "tiktok", "facebook", "instagram", "linkedin", "x"] as const;
