@@ -28,7 +28,7 @@
 - [ ] Verify API behavior, responsive UI, loading and error states, build quality, and core interaction flows.
 - [ ] Add state and interaction verification for Script Studio, Research, Assets, Editor, Voice, Jobs, and Copilot workflows.
 - [ ] Add explicit loading, success, and error-state tests for creator workflow queries and mutations, plus a documented verification matrix.
-- [ ] Add explicit research citation records and source-grounded summaries to the research API and workspace.
+- [x] Add explicit research citation records and source-grounded summaries to the research API and workspace.
 - [ ] Implement actual TTS generation and apply all catalog filters for gender, tone, accent, speed, and emotion.
 - [ ] Build official social-account, post, and scheduled-publishing procedures with provider adapters and approval gates. (Deferred by user; not part of current delivery scope.)
 - [x] Add plan, usage, notifications, and administrative health procedures and supporting UI.
@@ -92,3 +92,5 @@ The remaining unchecked items represent work that is not yet complete or require
 - [x] Exercise the browser recording and anchor-download path for the quick-draft export with controlled test doubles.
 - [x] Fix the Media Library mobile layout overflow observed during responsive verification.
 - [x] Add the missing React key to rendered Jobs workspace rows identified during interaction testing.
+- [x] Add Timeline Editor property-mutation and final-export interaction coverage beyond the quick-draft fallback.
+- [ ] Map each implemented workflow to its loading, empty, success, and error test coverage before closing broad verification.
