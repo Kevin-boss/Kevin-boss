@@ -68,6 +68,8 @@
 - [x] Add direct procedure-level coverage for administrator-recorded consent and the required before/after synthesis safety boundary.
 - [x] Add one end-to-end guarded flow test proving private TTS is blocked before consent is recorded and succeeds after `recordConsent` persists verified commercial consent.
 - [x] Add a deployment-readiness checklist for the private Kokoro worker, including health, authentication, consent, storage, and rollback controls.
+- [ ] Complete all provider link and configuration scaffolding before requesting remaining credentials together in a single consolidated step.
+- [ ] Add server-side private worker configuration status checks and an administrator-facing readiness surface for TTS and final render workers.
 
 ---
 
