@@ -53,6 +53,7 @@
 - [x] Add editable persisted track operations in the Timeline Editor.
 - [x] Implement a private render-worker endpoint boundary with tracked render jobs and safe unavailable states.
 - [ ] Add broad API and UI integration tests for completed production workflows.
+- [x] Add a focused production-workflow integration test covering the public-provider adapter’s secure authorization boundary alongside existing creator workflow contracts.
 
 ## External integration sequence
 

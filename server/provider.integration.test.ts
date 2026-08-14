@@ -14,6 +14,7 @@ vi.mock("./storage", () => ({ storagePut: vi.fn(), storageGetSignedUrl: vi.fn() 
 
 const provider = { id: 2, name: "Local image", provider: "comfyui", endpoint: "https://local.test/image", modelId: "free-image", costTier: "free" as const, selfHosted: "yes" as const, commercialUse: "allowed" as const, enabled: "yes" as const, capabilities: ["image"] };
 const textProvider = { ...provider, id: 3, endpoint: "https://local.test/text", modelId: "free-text", capabilities: ["text"] };
+const publicTextProvider = { ...textProvider, id: 33, name: "Hugging Face public text", provider: "huggingface", endpoint: "https://router.huggingface.co/v1/chat/completions", modelId: "openai/gpt-oss-20b:cheapest", selfHosted: "no" as const };
 const asrProvider = { ...provider, id: 4, endpoint: "https://local.test/asr", modelId: "free-asr", capabilities: ["asr"] };
 const ttsProvider = { ...provider, id: 5, endpoint: "https://local.test/tts", modelId: "free-tts", capabilities: ["tts"] };
 const videoProvider = { ...provider, id: 6, endpoint: "https://local.test/render", modelId: "free-render", capabilities: ["video"] };
@@ -50,6 +51,18 @@ describe("provider-backed production procedures", () => {
     const result = await appRouter.createCaller(ctx).production.script.generate({ projectId: 9, topic: "A sufficiently detailed topic", audience: "Creators", language: "en", tone: "Clear", durationMinutes: 1, keywords: [] });
     expect(result).toMatchObject({ jobId: 102, content: script });
     expect(fetch).toHaveBeenCalledWith("https://local.test/text", expect.objectContaining({ method: "POST" }));
+  });
+
+  it("keeps the public Hugging Face router credential server-side during script generation", async () => {
+    vi.clearAllMocks();
+    vi.mocked(requireProjectAccess).mockResolvedValue({ project: { id: 9, workspaceId: 3 } } as any);
+    vi.mocked(createJob).mockResolvedValue(122);
+    vi.mocked(updateJob).mockResolvedValue(undefined as any);
+    const script = { title: "Public", language: "en", hook: "Hook", summary: "Summary", cta: "CTA", scenes: [{ id: "scene_001", duration: 5, voiceover: "Voice", visualPrompt: "Visual", broll: "B-roll", onscreenText: "", transition: "cut", music: "ambient", soundEffect: "none" }] };
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(script) } }] }), { status: 200 })));
+    vi.mocked(getDb).mockResolvedValue({ select: () => ({ from: () => ({ where: () => queryRows([publicTextProvider]) }) }), insert: () => ({ values: async () => [{ insertId: 66 }] }), update: () => ({ set: () => ({ where: async () => [] }) }) } as any);
+    await expect(appRouter.createCaller(ctx).production.script.generate({ projectId: 9, topic: "A sufficiently detailed public provider topic", audience: "Creators", language: "en", tone: "Clear", durationMinutes: 1, keywords: [] })).resolves.toMatchObject({ jobId: 122, content: script });
+    expect(fetch).toHaveBeenCalledWith("https://router.huggingface.co/v1/chat/completions", expect.objectContaining({ headers: expect.objectContaining({ authorization: `Bearer ${process.env.HF_TOKEN}` }) }));
   });
 
   it("executes transcription through the preferred free ASR provider", async () => {
