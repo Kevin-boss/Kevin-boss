@@ -98,3 +98,9 @@ The user-directed delivery path remains **credential-free draft download**. The 
 - [x] Map each implemented workflow to its loading, empty, success, and error test coverage before closing broad verification.
 - [x] Add explicit pending/loading interaction tests for Research, Media Library, Voice & Captions, and Copilot mutations.
 - [ ] Add explicit query-loading UI coverage for Research, Media Library, Voice & Captions, and Copilot data queries.
+- [x] Add selectable resolution and quality profiles to the browser-local WebM quick-draft renderer.
+- [x] Add an in-browser WebM quick-draft preview with an explicit download action after generation.
+- [x] Add accessible draft-rendering progress feedback and cancellation-safe cleanup for browser-local export.
+- [ ] Add production quality-profile controls that clearly distinguish the local draft renderer from natural-voice, realistic long-form worker rendering.
+- [x] Document the private-worker, licensed TTS, and GPU rendering requirements for realistic videos and natural voices approaching one hour.
+- [x] Add abort support and unmount-safe cleanup for in-flight browser-local WebM rendering, with automated coverage.

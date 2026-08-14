@@ -30,7 +30,13 @@ Production FFmpeg rendering, open-source TTS deployment, local-model inference, 
 
 Cross-platform publishing and social OAuth are intentionally deferred. The current product exposes export presets for landscape, vertical, and square output; submits versioned video documents to a private render-worker boundary; records completed worker-returned video files as tenant-scoped video assets; and generates signed download URLs only after access checks. A render worker must return a `storageKey` in its JSON response for an export to become downloadable.
 
-For immediate use without credentials or a worker, the Scene Editor also provides **Download quick draft**. It renders the saved scene manifest locally in the browser and downloads a short, caption-style WebM file. This fallback is intentionally labelled as a draft: it contains rendered scene cards and text, does not claim to produce a final MP4, and does not upload any video to the server. The worker path remains the production route for final MP4 assets.
+For immediate use without credentials or a worker, the Scene Editor provides a **quick-draft WebM workflow**. Users choose Preview, Standard, or High quality, create the browser-local WebM, monitor visible rendering progress, inspect it directly in an in-browser video player, then explicitly download it. The active render can be cancelled; cancellation stops the recorder and canvas-media tracks, and unmount cleanup aborts an in-flight preview to prevent stale UI updates. The fallback is intentionally labelled as a draft: it renders scene cards and text, is capped at 24 seconds, does not synthesize a natural voice or photoreal footage, and never uploads video to the server. The worker path remains the production route for final MP4 assets.
+
+## Realistic and long-form production boundary
+
+The local browser renderer is deliberately not presented as a model-tuned, hyper-realistic video system. Natural speech, photoreal generated footage, lip synchronization, music mixing, and exports approaching one hour require a private, asynchronous production worker. That worker must combine approved image/video generation models, a licensed neural TTS provider or self-hosted speech model, FFmpeg-based composition, object storage, resumable job orchestration, and tenant-scoped render callbacks.
+
+For responsible operation, the production worker must retain model identifiers, voice and asset licences, prompt and source provenance, quality settings, job timing, and the output checksum. The application already provides the provider registry, free-first policy gate, render job boundary, approval states, and signed-download records required to attach that worker later. Model fine-tuning or voice cloning must remain opt-in, rights-checked, and implemented only after the chosen provider and deployment environment are configured.
 
 ## Next Engineering Steps
 
