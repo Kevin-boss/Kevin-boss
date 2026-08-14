@@ -16,6 +16,7 @@ const textProvider = { ...provider, id: 3, endpoint: "https://local.test/text", 
 const asrProvider = { ...provider, id: 4, endpoint: "https://local.test/asr", modelId: "free-asr", capabilities: ["asr"] };
 const ttsProvider = { ...provider, id: 5, endpoint: "https://local.test/tts", modelId: "free-tts", capabilities: ["tts"] };
 const videoProvider = { ...provider, id: 6, endpoint: "https://local.test/render", modelId: "free-render", capabilities: ["video"] };
+const paidOnly = <T extends typeof provider>(configuredProvider: T) => ({ ...configuredProvider, costTier: "paid" as const, selfHosted: "no" as const });
 const user = { id: 7, openId: "provider-user", email: "provider@example.com", name: "Provider User", loginMethod: "manus", role: "user" as const, createdAt: new Date(), updatedAt: new Date(), lastSignedIn: new Date() };
 const ctx = { user, req: { protocol: "https", headers: {} } as any, res: {} as any };
 const queryRows = (rows: unknown[]) => Object.assign(Promise.resolve(rows), { limit: async () => rows });
@@ -62,6 +63,20 @@ describe("provider-backed production procedures", () => {
     expect(fetch).toHaveBeenCalledWith("https://local.test/asr", expect.objectContaining({ method: "POST" }));
   });
 
+  it("rejects paid-only text, image, and ASR registry configurations before execution", async () => {
+    vi.clearAllMocks();
+    vi.mocked(requireProjectAccess).mockResolvedValue({ project: { id: 9, workspaceId: 3 } } as any);
+    const caller = appRouter.createCaller(ctx);
+    for (const [configuredProvider, execute] of [
+      [paidOnly(textProvider), () => caller.production.script.generate({ projectId: 9, topic: "A sufficiently detailed topic", audience: "Creators", language: "en", tone: "Clear", durationMinutes: 1, keywords: [] })],
+      [paidOnly(provider), () => caller.production.assets.createImage({ projectId: 9, prompt: "A cinematic studio workspace with soft light", title: "Studio visual", usage: "scene_visual" })],
+      [paidOnly(asrProvider), () => caller.production.voice.transcribe({ projectId: 9, audioUrl: "https://local.test/audio.wav", title: "Transcript" })],
+    ] as const) {
+      vi.mocked(getDb).mockResolvedValue({ select: () => ({ from: () => ({ where: () => queryRows([configuredProvider]) }) }) } as any);
+      await expect(execute()).rejects.toThrow(/free or self-hosted/i);
+    }
+  });
+
   it("submits render jobs to the preferred free registry worker", async () => {
     vi.clearAllMocks();
     vi.mocked(requireProjectAccess).mockResolvedValue({ project: { id: 9, workspaceId: 3 } } as any);
@@ -93,5 +108,13 @@ describe("provider-backed production procedures", () => {
     const result = await appRouter.createCaller(ctx).production.voice.synthesize({ projectId: 9, providerId: 5, voiceId: "voice-1", text: "Hello", language: "en" });
     expect(result).toMatchObject({ jobId: 104, assetId: 58, url: "https://local.test/voice.wav" });
     expect(fetch).toHaveBeenCalledWith("https://local.test/tts", expect.objectContaining({ method: "POST" }));
+  });
+
+  it("rejects an explicitly selected paid-only TTS provider before synthesis", async () => {
+    vi.clearAllMocks();
+    vi.mocked(requireProjectAccess).mockResolvedValue({ project: { id: 9, workspaceId: 3 } } as any);
+    const paidTtsProvider = paidOnly(ttsProvider);
+    vi.mocked(getDb).mockResolvedValue({ select: () => ({ from: () => ({ where: () => queryRows([paidTtsProvider]) }) }) } as any);
+    await expect(appRouter.createCaller(ctx).production.voice.synthesize({ projectId: 9, providerId: 5, voiceId: "voice-1", text: "Hello", language: "en" })).rejects.toThrow(/free or self-hosted/i);
   });
 });
