@@ -1,8 +1,8 @@
 # Provider Credential Requirements
 
-## Consolidated Credential Collection
+## On-demand Platform Credential Collection
 
-AI Content OS is prepared to collect required values **together**, after private services are deployed. No raw secret is rendered in the browser, committed to source control, or embedded in a model-provider record.
+AI Content OS requests each platform's required values **only when the user elects to activate publishing for that platform**. The submitted values are stored server-side for future authorized publishing; no raw secret is rendered in the browser, committed to source control, or embedded in a model-provider record.
 
 | Integration | Required server-side variable | Provide when | Notes |
 |---|---|---|---|
@@ -15,7 +15,7 @@ AI Content OS is prepared to collect required values **together**, after private
 | LinkedIn | `LINKEDIN_CLIENT_ID`, `LINKEDIN_CLIENT_SECRET` | When the LinkedIn OAuth adapter is activated. | Organization video posting requires the applicable application permissions and organization rights.[4] |
 | X API | `X_CLIENT_ID`, `X_CLIENT_SECRET`, `X_WEBHOOK_SECRET` | When the X OAuth adapter is activated. | X post creation requires user-context OAuth; webhook activation also requires a public HTTPS callback with challenge-response validation.[5] |
 
-The currently configured credential-free paths use the built-in application services and the browser-local WebM renderer. Official social publishing now has documented provider contracts, a connection-readiness surface, account/approval/attempt records, and a durable dispatch callback foundation. External post creation remains safely disabled until the consolidated application credentials above are supplied, the required OAuth redirects and platform reviews are completed, and the approved account is connected. The official public Hugging Face endpoint remains the default public-provider reference; the included Kokoro worker remains an optional self-hosted path for work that needs the private consent-controlled contract.
+The currently configured credential-free paths use the built-in application services and the browser-local WebM renderer. Official social publishing now has documented provider contracts, a connection-readiness surface, account/approval/attempt records, and a durable dispatch callback foundation. External post creation remains safely disabled until the user selects a platform for publishing, provides that platform's official application credentials, completes the required OAuth redirects and platform review, and connects an approved account. The official public Hugging Face endpoint remains the default public-provider reference; the included Kokoro worker remains an optional self-hosted path for work that needs the private consent-controlled contract.
 
 ## Validation Record
 

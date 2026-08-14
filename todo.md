@@ -43,7 +43,7 @@
 - [x] Add API, integration, and UI flow tests for the implemented production workflows.
 - [x] Document local configuration, implementation limitations, provider setup, and next steps for external credentials and production workers.
 - [x] Continue credential-independent completion before requesting external keys.
-- [ ] Request and validate the consolidated official social application credentials and optional private-worker tokens in one final collection step, then activate each OAuth/provider adapter sequentially.
+- [ ] Request and validate the required official application credentials only when the user elects to publish to the corresponding platform, then store them server-side and activate that platform's OAuth/provider adapter.
 - [x] Record credential setup status and provider validation results in project documentation.
 - [x] Verify official API, OAuth, post-publication, webhook, and licensing requirements for the selected social platforms before integration.
 - [x] Build the content calendar with calendar, agenda, status, approval, and project-linked publishing-plan views.
@@ -72,7 +72,7 @@
 ## External integration sequence
 
 - [x] Configure and validate the first required external provider key individually, then record its actual validation result.
-- [ ] Configure and validate social publishing credentials together after the provider boundary is implemented and the user supplies the consolidated credential set.
+- [ ] Configure and validate each selected social publishing platform only when the user asks to publish to it; store that platform's credentials server-side for future authorized publishing.
 - [ ] Configure and validate worker/render credentials or private endpoints individually after worker deployment is selected.
 - [x] Configure and validate TTS credentials individually after the approved TTS provider is selected.
 - [x] Research and document a current self-hosted natural-voice TTS deployment path before requesting its private endpoint or credentials.
