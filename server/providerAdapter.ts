@@ -41,3 +41,22 @@ export async function executeRegistryAsr(provider: RegistryProvider, payload: Re
   if (typeof response.text !== "string") throw new Error(`${provider.provider} returned no transcript text.`);
   return { text: response.text, language: typeof response.language === "string" ? response.language : "und", segments: Array.isArray(response.segments) ? response.segments : [] };
 }
+
+/**
+ * Future capability adapters must be created through this factory. It guarantees
+ * that every registry-backed execution performs the shared free-first selection
+ * before the modality-specific executor is called, with an explicit built-in
+ * fallback when no registry provider is configured.
+ */
+export function createProviderExecutor<TPayload, TResult>(config: {
+  capability: string;
+  executeRegistry: (provider: RegistryProvider, payload: TPayload) => Promise<TResult>;
+  executeBuiltIn: (payload: TPayload) => Promise<TResult>;
+}) {
+  return async (providers: unknown[], payload: TPayload) => {
+    const candidates = providers.filter((row): row is RegistryProvider => !!row && typeof row === "object" && typeof (row as RegistryProvider).endpoint === "string" && typeof (row as RegistryProvider).modelId === "string");
+    const selection = selectPreferredProvider(candidates, config.capability);
+    if (selection.mode === "registry" && selection.provider) return config.executeRegistry(selection.provider, payload);
+    return config.executeBuiltIn(payload);
+  };
+}

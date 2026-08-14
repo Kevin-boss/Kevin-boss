@@ -20,3 +20,7 @@ The application uses the following free-first rule: register self-hosted endpoin
 ## Runtime enforcement contract
 
 Every registry-driven execution path must load enabled model-provider rows and call the shared `assertBuiltInOrFreeFirst(providers, capability)` gate before creating a job or invoking a provider. When no eligible registry row exists, the current managed built-in service is permitted as a fallback. When eligible rows exist, the preferred free or self-hosted commercially allowed provider is selected; a paid-only configuration is rejected rather than silently used. New adapters must use this gate and add a capability-specific procedure test before being enabled.
+
+## Future adapter contract
+
+New capability adapters must be created through `createProviderExecutor`. The factory accepts a capability name, a registry executor, and a built-in fallback, then performs provider-row normalization and `selectPreferredProvider` before either branch executes. This prevents a new modality from accidentally bypassing free-first policy. The contract is covered by `server/providerAdapter.test.ts`.

@@ -69,7 +69,7 @@ The remaining unchecked items represent work that is not yet complete or require
 - [x] Document the selected free-first provider path and any unavoidable credential requirements.
 - [x] Enforce free/self-hosted provider preference across current registry-driven capability flows: LLM, image, ASR, TTS, and video/render.
 - [x] Add capability-specific provider selection and execution for current text, image, ASR, TTS, and render adapters, blocking paid-only registry configurations.
-- [ ] Add automated tests for free-first ordering and paid-provider blocking across supported capabilities.
+- [x] Add automated tests for free-first ordering and paid-provider blocking across current supported capabilities.
 - [x] Defer cross-platform publishing, social OAuth, and platform analytics integrations until a later phase.
 - [x] Prioritize downloadable video exports with explicit render completion, signed downloads, and export presets.
 - [x] Add completed-export records and download access to the Jobs and Editor workspaces.
@@ -81,6 +81,6 @@ The remaining unchecked items represent work that is not yet complete or require
 - [x] Add scene-level regeneration controls with auditable jobs and approval-aware replacement behavior.
 - [x] Attach citation IDs or provenance records to specific script scenes or claims.
 - [x] Stage regenerated scene variants for approval before replacing the active scene.
-- [ ] Add targeted Script Studio tests for scene editing, citation mapping, and regeneration approval.
+- [x] Add targeted Script Studio tests for scene editing, citation mapping, and regeneration approval.
 - [ ] Add procedure-level tests for provider selection and free-first blocking in text, image, ASR, TTS, and render paths.
-- [ ] Add a shared adapter wrapper or registration contract that makes free-first enforcement mandatory for future capability adapters.
+- [ ] Add a shared adapter factory and registration contract that makes free-first enforcement mandatory for future capability adapters.
