@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, isNull, like } from "drizzle-orm";
 import { z } from "zod";
-import { assets, captions, folders, jobs, modelProviders, researchClaims, researchCitations, researchSources, researchSummaries, scheduledPosts, scripts, socialAccounts, scenes, tracks, transcripts, videoVersions, videos, voices } from "../../drizzle/schema";
+import { assets, captions, folders, jobs, modelProviders, researchClaims, researchCitations, researchSources, researchSummaries, scheduledPosts, scripts, socialAccounts, scenes, tracks, transcripts, videoVersions, videos, voiceConsents, voices } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { generateImage } from "../_core/imageGeneration";
 import { invokeLLM } from "../_core/llm";
@@ -11,6 +11,7 @@ import { createProviderExecutor, executeRegistryAsr, executeRegistryImage, execu
 import { normalizeAssetMetadata } from "../assetMetadata";
 import { buildRenderManifestPayload, getRenderManifest, validateRenderResponse } from "../renderPolicy";
 import { attachSceneCitationIds, reviewSceneVariant as reviewScriptSceneVariant, stageSceneVariant, updateSceneFields } from "../scriptPolicy";
+import { assertApprovedVoiceForSynthesis, buildPrivateTtsPayload, parsePrivateTtsResponse } from "../ttsPolicy";
 import { createJob, recordAudit, requireProjectAccess, requireWorkspaceAccess, updateJob } from "../platform";
 import { storageGetSignedUrl, storagePut } from "../storage";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -161,8 +162,48 @@ export const productionRouter = router({
 
   voice: router({
     list: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), gender: z.enum(["male", "female", "neutral"]).optional(), language: z.enum(["en", "fr"]).optional(), tone: z.string().max(80).optional(), accent: z.string().max(80).optional(), speed: z.string().max(32).optional(), emotion: z.string().max(80).optional() })).query(async ({ ctx, input }) => { await requireWorkspaceAccess(ctx.user.id, input.workspaceId, "read"); const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database is unavailable." }); const filters = [eq(voices.workspaceId, input.workspaceId)]; if (input.gender) filters.push(eq(voices.gender, input.gender)); if (input.language) filters.push(eq(voices.language, input.language)); if (input.tone) filters.push(eq(voices.tone, input.tone)); if (input.accent) filters.push(eq(voices.accent, input.accent)); if (input.speed) filters.push(eq(voices.speed, input.speed)); if (input.emotion) filters.push(eq(voices.emotion, input.emotion)); return db.select().from(voices).where(and(...filters)); }),
+    recordConsent: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), voiceId: z.number().int().positive(), status: z.enum(["pending", "verified", "revoked"]), approvedUseScope: z.enum(["commercial_tts", "internal_only"]), evidenceReference: z.string().min(8).max(500).optional() })).mutation(async ({ ctx, input }) => {
+      await requireWorkspaceAccess(ctx.user.id, input.workspaceId, "admin");
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database is unavailable." });
+      const voice = (await db.select().from(voices).where(and(eq(voices.id, input.voiceId), eq(voices.workspaceId, input.workspaceId))).limit(1))[0];
+      if (!voice) throw new TRPCError({ code: "NOT_FOUND", message: "Voice not found in this workspace." });
+      if (input.status === "verified" && (!input.evidenceReference || input.approvedUseScope !== "commercial_tts")) throw new TRPCError({ code: "BAD_REQUEST", message: "Verified commercial consent requires commercial_tts scope and an evidence reference." });
+      const values = { status: input.status, approvedUseScope: input.approvedUseScope, evidenceReference: input.evidenceReference ?? null, verifiedByUserId: input.status === "verified" ? ctx.user.id : null, verifiedAt: input.status === "verified" ? new Date() : null };
+      const existing = (await db.select().from(voiceConsents).where(and(eq(voiceConsents.voiceId, voice.id), eq(voiceConsents.workspaceId, input.workspaceId))).orderBy(desc(voiceConsents.updatedAt)).limit(1))[0];
+      if (existing) await db.update(voiceConsents).set(values).where(eq(voiceConsents.id, existing.id));
+      else await db.insert(voiceConsents).values({ voiceId: voice.id, workspaceId: input.workspaceId, ...values });
+      await recordAudit({ workspaceId: input.workspaceId, userId: ctx.user.id, action: "voice.consent_recorded", entityType: "voice", entityId: String(voice.id), metadata: { status: input.status, approvedUseScope: input.approvedUseScope, evidenceReference: input.evidenceReference ?? null } });
+      return { voiceId: voice.id, ...values };
+    }),
     synthesize: protectedProcedure.input(z.object({ projectId: z.number().int().positive(), providerId: z.number().int().positive(), voiceId: z.string().min(1).max(191), text: z.string().min(1).max(12000), language: z.enum(["en", "fr"]), speed: z.number().min(0.5).max(2).default(1), emotion: z.string().max(80).optional() })).mutation(async ({ ctx, input }) => {
-      const { project } = await requireProjectAccess(ctx.user.id, input.projectId, "edit"); const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database is unavailable." }); const provider = (await db.select().from(modelProviders).where(eq(modelProviders.id, input.providerId)).limit(1))[0]; const availableTtsProviders = await db.select().from(modelProviders).where(eq(modelProviders.enabled, "yes")); assertBuiltInOrFreeFirst(Array.isArray(availableTtsProviders) ? availableTtsProviders : [], "tts"); assertFreeFirstSelection(provider, availableTtsProviders, "tts"); if (!provider || provider.enabled !== "yes" || provider.commercialUse !== "allowed" || !(provider.capabilities as string[]).includes("tts")) throw new TRPCError({ code: "BAD_REQUEST", message: "Select an enabled TTS provider with an allowed commercial-use policy." }); const jobId = await createJob({ workspaceId: project.workspaceId, projectId: project.id, type: "tts", actorUserId: ctx.user.id, payload: { providerId: input.providerId, voiceId: input.voiceId, language: input.language } }); await updateJob(jobId, { status: "processing", progress: 15, startedAt: new Date() }, { message: "Calling approved self-hosted TTS provider", progress: 15 }); try { const response = await fetch(provider.endpoint, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ model: provider.modelId, voice: input.voiceId, text: input.text, language: input.language, speed: input.speed, emotion: input.emotion ?? null }), signal: AbortSignal.timeout(45000) }); if (!response.ok) throw new Error(`TTS provider returned HTTP ${response.status}.`); const payload = await response.json() as { audioBase64?: string; mimeType?: string }; if (!payload.audioBase64) throw new Error("TTS provider response did not include audioBase64."); const data = Buffer.from(payload.audioBase64, "base64"); const mimeType = payload.mimeType ?? "audio/wav"; const stored = await storagePut(`workspaces/${project.workspaceId}/tts/${Date.now()}-${input.voiceId}.wav`, data, mimeType); const result = await db.insert(assets).values({ workspaceId: project.workspaceId, projectId: project.id, type: "audio", title: `TTS · ${input.voiceId}`, storageKey: stored.key, storageUrl: stored.url, source: "derived", rightsStatus: "verified", metadata: { providerId: input.providerId, provider: provider.provider, modelId: provider.modelId, voiceId: input.voiceId, language: input.language }, createdByUserId: ctx.user.id }); const assetId = Number(result[0].insertId); await updateJob(jobId, { status: "completed", progress: 100, result: { assetId, url: stored.url }, completedAt: new Date() }, { message: "Self-hosted TTS audio ready", progress: 100 }); return { jobId, assetId, url: stored.url }; } catch (error) { const message = error instanceof Error ? error.message : "TTS synthesis failed."; await updateJob(jobId, { status: "failed", errorCode: "TTS_FAILED", errorMessage: message, completedAt: new Date() }, { message, level: "error" }); throw new TRPCError({ code: "BAD_GATEWAY", message }); }
+      const { project } = await requireProjectAccess(ctx.user.id, input.projectId, "edit");
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database is unavailable." });
+      const provider = (await db.select().from(modelProviders).where(eq(modelProviders.id, input.providerId)).limit(1))[0];
+      const availableTtsProviders = await db.select().from(modelProviders).where(eq(modelProviders.enabled, "yes"));
+      assertBuiltInOrFreeFirst(Array.isArray(availableTtsProviders) ? availableTtsProviders : [], "tts");
+      assertFreeFirstSelection(provider, availableTtsProviders, "tts");
+      if (!provider || provider.enabled !== "yes" || provider.commercialUse !== "allowed" || !(provider.capabilities as string[]).includes("tts")) throw new TRPCError({ code: "BAD_REQUEST", message: "Select an enabled TTS provider with an allowed commercial-use policy." });
+      const voice = (await db.select().from(voices).where(and(eq(voices.workspaceId, project.workspaceId), eq(voices.providerVoiceId, input.voiceId))).limit(1))[0];
+      const consent = voice ? (await db.select().from(voiceConsents).where(and(eq(voiceConsents.voiceId, voice.id), eq(voiceConsents.workspaceId, project.workspaceId))).limit(1))[0] : undefined;
+      try { assertApprovedVoiceForSynthesis(voice, consent, project.workspaceId, provider.provider, input.voiceId); } catch (error) { throw new TRPCError({ code: "BAD_REQUEST", message: error instanceof Error ? error.message : "Voice approval could not be verified." }); }
+      const jobId = await createJob({ workspaceId: project.workspaceId, projectId: project.id, type: "tts", actorUserId: ctx.user.id, payload: { providerId: input.providerId, voiceId: input.voiceId, language: input.language, voiceApproval: "commercial_use_allowed" } });
+      await updateJob(jobId, { status: "processing", progress: 15, startedAt: new Date() }, { message: "Calling approved self-hosted TTS provider", progress: 15 });
+      try {
+        const response = await fetch(provider.endpoint, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(buildPrivateTtsPayload({ model: provider.modelId, voice: input.voiceId, text: input.text, language: input.language, speed: input.speed, emotion: input.emotion })), signal: AbortSignal.timeout(45_000) });
+        if (!response.ok) throw new Error(`TTS provider returned HTTP ${response.status}.`);
+        const payload = parsePrivateTtsResponse(await response.json());
+        const stored = await storagePut(`workspaces/${project.workspaceId}/tts/${Date.now()}-${input.voiceId}.wav`, Buffer.from(payload.audioBase64, "base64"), payload.mimeType);
+        const result = await db.insert(assets).values({ workspaceId: project.workspaceId, projectId: project.id, type: "audio", title: `TTS · ${input.voiceId}`, storageKey: stored.key, storageUrl: stored.url, source: "derived", rightsStatus: "verified", metadata: { providerId: input.providerId, provider: provider.provider, modelId: provider.modelId, voiceId: input.voiceId, language: input.language, voiceApproval: "commercial_use_allowed" }, createdByUserId: ctx.user.id });
+        const assetId = Number(result[0].insertId);
+        await updateJob(jobId, { status: "completed", progress: 100, result: { assetId, url: stored.url }, completedAt: new Date() }, { message: "Self-hosted TTS audio ready", progress: 100 });
+        return { jobId, assetId, url: stored.url };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "TTS synthesis failed.";
+        await updateJob(jobId, { status: "failed", errorCode: "TTS_FAILED", errorMessage: message, completedAt: new Date() }, { message, level: "error" });
+        throw new TRPCError({ code: "BAD_GATEWAY", message });
+      }
     }),
     transcribe: protectedProcedure.input(z.object({ projectId: z.number().int().positive(), audioUrl: z.string().url(), language: z.enum(["en", "fr"]).optional(), title: z.string().min(2).max(160).default("Project transcript"), captionStyle: z.enum(["minimal", "karaoke", "boxed", "broadcast"]).default("minimal") })).mutation(async ({ ctx, input }) => {
       const { project } = await requireProjectAccess(ctx.user.id, input.projectId, "edit"); const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database is unavailable." }); const configuredProviders = await db.select().from(modelProviders).where(eq(modelProviders.enabled, "yes")); assertBuiltInOrFreeFirst(Array.isArray(configuredProviders) ? configuredProviders : [], "asr"); const jobId = await createJob({ workspaceId: project.workspaceId, projectId: project.id, type: "transcription", actorUserId: ctx.user.id, payload: input }); await updateJob(jobId, { status: "processing", progress: 20, startedAt: new Date() }, { message: "Transcribing audio with word timing", progress: 20 });

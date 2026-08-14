@@ -50,6 +50,13 @@
       "when": 1786693676786,
       "tag": "0006_worried_centennial",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1786703269950,
+      "tag": "0007_classy_omega_sentinel",
+      "breakpoints": true
     }
   ]
 }

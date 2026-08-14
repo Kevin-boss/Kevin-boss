@@ -23,6 +23,8 @@ Public internet research can identify software and model assets; it cannot provi
 | Response | `audio/wav` binary stream, or JSON containing a short-lived signed audio URL and duration metadata. |
 | Guardrails | Enforce a permitted-voice allow-list, record source/voice consent, reject unauthorised cloning references, bound text length, and retain model/version provenance with each render job. |
 
+The application now enforces the controllable parts of this boundary before calling a registered provider: the selected voice must belong to the project's workspace, match the selected provider, and be marked `commercialUse: "allowed"`. A `voiceConsents` record must also match the selected voice and workspace, have `status: "verified"`, declare `approvedUseScope: "commercial_tts"`, contain an `evidenceReference`, and include a verifier and verification timestamp. The adapter sends a stable Kokoro-compatible JSON request, requires a non-empty base64 audio response, only accepts `audio/*` MIME types, and records provider, model, approved voice, language, and approval provenance on the resulting tenant-scoped audio asset. Live synthesis remains unavailable until the private endpoint is registered and enabled.
+
 ## Deployment Recommendation
 
 Deploy the model and adapter as an isolated private service rather than inside the request-scoped web application. The adapter should load approved Kokoro voices, write generated WAV files to tenant-scoped object storage, and return a signed or private storage reference to the existing render worker. The private worker can then join voice, captions, licensed media, and scene timing into final MP4 output.

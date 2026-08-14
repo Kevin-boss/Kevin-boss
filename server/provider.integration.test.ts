@@ -3,6 +3,7 @@ import { appRouter } from "./routers";
 import { getDb } from "./db";
 import { createJob, requireProjectAccess, updateJob } from "./platform";
 import { storagePut } from "./storage";
+import { voiceConsents, voices } from "../drizzle/schema";
 
 vi.mock("./db", () => ({ getDb: vi.fn() }));
 vi.mock("./platform", async importOriginal => {
@@ -104,10 +105,13 @@ describe("provider-backed production procedures", () => {
     vi.mocked(updateJob).mockResolvedValue(undefined as any);
     vi.mocked(storagePut).mockResolvedValue({ key: "tts/voice.wav", url: "https://local.test/voice.wav" });
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ audioBase64: Buffer.from("audio").toString("base64"), mimeType: "audio/wav" }), { status: 200 })));
-    vi.mocked(getDb).mockResolvedValue({ select: () => ({ from: () => ({ where: () => queryRows([ttsProvider]) }) }), insert: () => ({ values: async () => [{ insertId: 58 }] }) } as any);
+    const approvedVoice = { id: 12, workspaceId: 3, provider: ttsProvider.provider, providerVoiceId: "voice-1", commercialUse: "allowed" as const };
+    const verifiedConsent = { voiceId: 12, workspaceId: 3, status: "verified" as const, approvedUseScope: "commercial_tts" as const, evidenceReference: "consent/voice-1.pdf", verifiedByUserId: 7, verifiedAt: new Date() };
+    vi.mocked(getDb).mockResolvedValue({ select: () => ({ from: (table: unknown) => ({ where: () => queryRows(table === voices ? [approvedVoice] : table === voiceConsents ? [verifiedConsent] : [ttsProvider]) }) }), insert: () => ({ values: async () => [{ insertId: 58 }] }) } as any);
     const result = await appRouter.createCaller(ctx).production.voice.synthesize({ projectId: 9, providerId: 5, voiceId: "voice-1", text: "Hello", language: "en" });
     expect(result).toMatchObject({ jobId: 104, assetId: 58, url: "https://local.test/voice.wav" });
     expect(fetch).toHaveBeenCalledWith("https://local.test/tts", expect.objectContaining({ method: "POST" }));
+    expect(JSON.parse(vi.mocked(fetch).mock.calls[0]![1]!.body as string)).toMatchObject({ input: "Hello", response_format: "wav" });
   });
 
   it("rejects an explicitly selected paid-only TTS provider before synthesis", async () => {
