@@ -87,4 +87,15 @@ describe("Timeline Editor interactions", () => {
     expect(mocks.refetchExports).toHaveBeenCalledOnce();
     expect(toast.success).toHaveBeenCalledWith("Render queued but no worker is configured yet.");
   });
+
+  it("shows the pending final-render state and prevents duplicate submission", async () => {
+    await act(async () => root.unmount());
+    mocks.render.isPending = true;
+    const { default: TimelineEditor } = await import("./TimelineEditor");
+    root = createRoot(container);
+    await act(async () => root.render(<TimelineEditor />));
+    await selectProject();
+    const renderButton = Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Render MP4"))!;
+    expect(renderButton.disabled).toBe(true);
+  });
 });
