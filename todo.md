@@ -70,7 +70,8 @@
 - [x] Add one end-to-end guarded flow test proving private TTS is blocked before consent is recorded and succeeds after `recordConsent` persists verified commercial consent.
 - [x] Add a deployment-readiness checklist for the private Kokoro worker, including health, authentication, consent, storage, and rollback controls.
 - [ ] Complete all provider link and configuration scaffolding before requesting remaining credentials together in a single consolidated step.
-- [ ] Add server-side private worker configuration status checks and an administrator-facing readiness surface for TTS and final render workers.
+- [x] Add server-side private worker configuration status checks and an administrator-facing readiness surface for TTS and final render workers.
+- [x] Distinguish endpoint, token, and fully-ready worker states; render explicit administrator-restricted and health-error states with UI coverage.
 - [ ] Align TTS and render configuration with verified public official endpoints so consolidated credential collection requests keys or tokens only.
 - [x] Explicitly distinguish public-token provider calls from the final MP4 render worker, which remains a private service URL requirement until a verified public render contract is implemented.
 
