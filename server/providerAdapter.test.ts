@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createProviderExecutor, executeRegistryAsr, executeRegistryImage, executeRegistryText, getProviderAdapter, registerProviderAdapter } from "./providerAdapter";
+import { callRegistryProvider, createProviderExecutor, executeRegistryAsr, executeRegistryImage, executeRegistryText, getProviderAdapter, registerProviderAdapter } from "./providerAdapter";
 
 const provider = { id: 1, provider: "local", endpoint: "https://local.test/v1", modelId: "free-model", costTier: "free" as const, selfHosted: "yes" as const, commercialUse: "allowed" as const, enabled: "yes" as const, capabilities: ["text", "image", "asr", "future"] };
 
@@ -17,6 +17,12 @@ describe("registry provider adapter", () => {
   it("normalizes ASR text, language, and segments", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ text: "hello", language: "en", segments: [{ start: 0, end: 1, text: "hello" }] }), { status: 200 })));
     await expect(executeRegistryAsr(provider, { audioUrl: "https://local.test/audio.wav" })).resolves.toEqual({ text: "hello", language: "en", segments: [{ start: 0, end: 1, text: "hello" }] });
+  });
+
+  it("adds server-side authorization only for the official Hugging Face public router", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 })));
+    await callRegistryProvider({ ...provider, endpoint: "https://router.huggingface.co/v1/chat/completions" }, { messages: [] });
+    expect(vi.mocked(fetch).mock.calls[0]![1]).toMatchObject({ headers: expect.objectContaining({ authorization: `Bearer ${process.env.HF_TOKEN}` }) });
   });
 
   it("forces future adapters through free-first selection before execution", async () => {

@@ -6,12 +6,15 @@ AI Content OS is prepared to collect required values **together**, after private
 
 | Integration | Required server-side variable | Provide when | Notes |
 |---|---|---|---|
-| Kokoro private TTS worker | `TTS_WORKER_URL` | The private worker is deployed and its `/healthz` endpoint is reachable from the application. | Example format: `https://tts.example.internal`. The registered provider endpoint is the service speech route. |
-| Kokoro private TTS worker | `TTS_WORKER_TOKEN` | At the same time as `TTS_WORKER_URL`, if bearer authentication is enabled. | Use a high-entropy token. It is sent only from the server to `POST /v1/audio/speech`. |
-| Private production render worker | `RENDER_WORKER_URL` | The MP4 render worker is deployed and reachable from the application. | Required for natural-voice, long-form final MP4 jobs; not needed for browser-local WebM drafts. |
-| Private production render worker | `RENDER_WORKER_TOKEN` | At the same time as `RENDER_WORKER_URL`, if bearer authentication is enabled. | Sent only from the server to the private render-worker endpoint. |
+| Hugging Face Inference Providers | `HF_TOKEN` | Public-provider inference is enabled. | The official public base URL is `https://router.huggingface.co/v1`; use a fine-grained token permitted to make Inference Provider calls. |
+| Private Kokoro worker | `TTS_WORKER_TOKEN` | Only if the optional self-hosted Kokoro worker is later deployed with authentication. | No worker URL is requested: deployment-specific URLs are registered by an administrator after service deployment. |
+| Private production render worker | `RENDER_WORKER_TOKEN` | Only if the optional self-hosted final-render worker is later deployed with authentication. | Browser-local WebM drafts do not require this value. |
 
-The currently configured credential-free paths use the built-in application services and the browser-local WebM renderer. Social-publishing credentials remain intentionally out of scope until the deferred publishing adapter is implemented and official platform account links are ready.
+The currently configured credential-free paths use the built-in application services and the browser-local WebM renderer. Social-publishing credentials remain intentionally out of scope until the deferred publishing adapter is implemented and official platform account links are ready. The official public Hugging Face endpoint is used as the default public-provider reference; the included Kokoro worker remains an optional self-hosted path for work that needs the private consent-controlled contract.
+
+## Validation Record
+
+The supplied `HF_TOKEN` was validated against Hugging Face's official `GET https://huggingface.co/api/whoami-v2` account endpoint. Registry adapters now attach that token only when calling the public `https://router.huggingface.co/` inference router; local and private endpoints do not receive it. The credential and header-routing behavior are covered by automated tests.
 
 ## Public Provider References
 
@@ -21,3 +24,4 @@ The currently configured credential-free paths use the built-in application serv
 | TTS model assets | [Kokoro-82M model card](https://huggingface.co/hexgrad/Kokoro-82M) | Review voices and permitted use before administrator consent is verified. |
 | ASR | [Whisper](https://github.com/openai/whisper) | Existing registry-backed ASR boundary; self-hosted endpoint remains optional. |
 | Image generation | [ComfyUI](https://github.com/Comfy-Org/ComfyUI) | Existing registry-backed image boundary; self-hosted endpoint remains optional. |
+| Text-to-video generation | [Hugging Face InferenceClient](https://huggingface.co/docs/huggingface.js/en/inference/classes/InferenceClient) | Public token-only generation capability via `textToVideo`; suitable for generated clips, not a substitute for the multi-track, captions, licensed-media, and long-form final MP4 compositing worker. |

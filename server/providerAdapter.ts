@@ -7,9 +7,10 @@ export function selectPreferredProvider(providers: RegistryProvider[], capabilit
 }
 
 export async function callRegistryProvider(provider: RegistryProvider, payload: Record<string, unknown>, timeoutMs = 45_000) {
+  const isHuggingFaceRouter = provider.endpoint.startsWith("https://router.huggingface.co/");
   const response = await fetch(provider.endpoint, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...(isHuggingFaceRouter && process.env.HF_TOKEN ? { authorization: `Bearer ${process.env.HF_TOKEN}` } : {}) },
     body: JSON.stringify({ model: provider.modelId, ...payload }),
     signal: AbortSignal.timeout(timeoutMs),
   });
