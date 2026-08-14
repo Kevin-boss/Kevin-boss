@@ -61,4 +61,16 @@ describe("Script Studio generation UI", () => {
     expect(mocks.generate.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ projectId: 9 }));
     expect(toast.error).toHaveBeenCalledWith("Text provider unavailable");
   });
+
+  it("shows the pending generation state and disables repeat submission", async () => {
+    await act(async () => root.unmount());
+    mocks.generate.isPending = true;
+    const { default: ScriptStudio } = await import("./ScriptStudio");
+    root = createRoot(container);
+    await act(async () => root.render(<ScriptStudio />));
+    const projectButton = Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.includes("Select test project"))!;
+    await act(async () => projectButton.click());
+    const button = Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Building scene plan"))!;
+    expect(button.disabled).toBe(true);
+  });
 });
