@@ -93,4 +93,4 @@ The remaining unchecked items represent work that is not yet complete or require
 - [x] Fix the Media Library mobile layout overflow observed during responsive verification.
 - [x] Add the missing React key to rendered Jobs workspace rows identified during interaction testing.
 - [x] Add Timeline Editor property-mutation and final-export interaction coverage beyond the quick-draft fallback.
-- [ ] Map each implemented workflow to its loading, empty, success, and error test coverage before closing broad verification.
+- [x] Map each implemented workflow to its loading, empty, success, and error test coverage before closing broad verification.
