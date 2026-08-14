@@ -66,6 +66,8 @@
 ## History note
 
 The remaining unchecked items represent work that is not yet complete or requires external credentials, workers, platform approvals, or provider-specific implementation. They must not be reported as finished until validated.
+
+The user-directed delivery path remains **credential-free draft download**. The unchecked TTS, render-worker, and social-publishing entries are deliberately retained as deferred integration work; they do not block the Scene Editor's browser-local quick-draft WebM download.
 - [x] Prioritize free-tier, open-source, and self-hostable providers before paid APIs.
 - [x] Prefer local or private-endpoint TTS and rendering boundaries where practical.
 - [x] Do not request an external API key when a validated free or self-hosted alternative exists.
