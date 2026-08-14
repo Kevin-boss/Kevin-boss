@@ -72,7 +72,7 @@
 - [ ] Complete all provider link and configuration scaffolding before requesting remaining credentials together in a single consolidated step.
 - [ ] Add server-side private worker configuration status checks and an administrator-facing readiness surface for TTS and final render workers.
 - [ ] Align TTS and render configuration with verified public official endpoints so consolidated credential collection requests keys or tokens only.
-- [ ] Explicitly distinguish public-token provider calls from the final MP4 render worker, which remains a private service URL requirement until a verified public render contract is implemented.
+- [x] Explicitly distinguish public-token provider calls from the final MP4 render worker, which remains a private service URL requirement until a verified public render contract is implemented.
 
 ---
 

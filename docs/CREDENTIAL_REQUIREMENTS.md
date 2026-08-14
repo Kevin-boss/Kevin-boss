@@ -16,6 +16,10 @@ The currently configured credential-free paths use the built-in application serv
 
 The supplied `HF_TOKEN` was validated against Hugging Face's official `GET https://huggingface.co/api/whoami-v2` account endpoint. Registry adapters now attach that token only when calling the public `https://router.huggingface.co/` inference router; local and private endpoints do not receive it. The credential and header-routing behavior are covered by automated tests.
 
+## Operational Boundary
+
+**Public provider calls** use the official Hugging Face router and the server-side `HF_TOKEN`. They can support registry-backed inference, including model-selected public generation capabilities. **Browser-local quick drafts** render locally and require no service credential. **Final production MP4 composition** remains a separate private render-worker capability because it combines timeline tracks, captions, licensed assets, storage persistence, and long-running job control; it must not be represented as a public text-to-video call. The Scene Editor labels this distinction directly so users can choose a local draft without mistaking it for natural-voice worker output.
+
 ## Public Provider References
 
 | Capability | Official reference | Integration boundary |
