@@ -7,9 +7,10 @@ import { toast } from "sonner";
 const mocks = vi.hoisted(() => ({
   addSource: { isPending: false, mutateAsync: vi.fn() },
   refetch: vi.fn(),
+  isLoading: false,
 }));
 
-vi.mock("@/lib/trpc", () => ({ trpc: { production: { research: { list: { useQuery: () => ({ data: { sources: [], claims: [], citations: [] }, refetch: mocks.refetch }) }, addSource: { useMutation: () => mocks.addSource }, extractClaims: { useMutation: () => ({ isPending: false, mutateAsync: vi.fn() }) } } } } }));
+vi.mock("@/lib/trpc", () => ({ trpc: { production: { research: { list: { useQuery: () => ({ data: { sources: [], claims: [], citations: [] }, refetch: mocks.refetch, isLoading: mocks.isLoading }) }, addSource: { useMutation: () => mocks.addSource }, extractClaims: { useMutation: () => ({ isPending: false, mutateAsync: vi.fn() }) } } } } }));
 vi.mock("@/components/PageHeader", () => ({ PageHeader: ({ title }: { title: string }) => <header>{title}</header> }));
 vi.mock("@/components/ProjectPicker", () => ({ ProjectPicker: ({ onChange }: { onChange: (id: number) => void }) => <button type="button" onClick={() => onChange(9)}>Select test project</button> }));
 vi.mock("@/components/ui/button", () => ({ Button: (props: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button {...props} /> }));
@@ -27,6 +28,7 @@ describe("Research source UI", () => {
   beforeEach(async () => {
     vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
     mocks.addSource.isPending = false;
+    mocks.isLoading = false;
     mocks.addSource.mutateAsync.mockReset();
     mocks.refetch.mockReset();
     vi.mocked(toast.success).mockReset();
@@ -57,5 +59,28 @@ describe("Research source UI", () => {
     await act(async () => { button.click(); await Promise.resolve(); });
     expect(mocks.addSource.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ projectId: 9 }));
     expect(toast.error).toHaveBeenCalledWith("Source storage unavailable");
+  });
+
+  it("disables source submission while a source mutation is pending", async () => {
+    await act(async () => root.unmount());
+    mocks.addSource.isPending = true;
+    const { default: Research } = await import("./Research");
+    root = createRoot(container);
+    await act(async () => root.render(<Research />));
+    const projectButton = Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.includes("Select test project"))!;
+    await act(async () => projectButton.click());
+    const button = Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Add source"))!;
+    expect(button.disabled).toBe(true);
+  });
+
+  it("shows source material loading while the selected-project query is pending", async () => {
+    await act(async () => root.unmount());
+    mocks.isLoading = true;
+    const { default: Research } = await import("./Research");
+    root = createRoot(container);
+    await act(async () => root.render(<Research />));
+    const projectButton = Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.includes("Select test project"))!;
+    await act(async () => projectButton.click());
+    expect(container.textContent).toContain("Loading source material…");
   });
 });

@@ -67,4 +67,16 @@ describe("Copilot project action UI", () => {
     expect(mocks.execute.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ projectId: 9 }));
     expect(toast.error).toHaveBeenCalledWith("Provider unavailable");
   });
+
+  it("disables executable command submission while the action is pending", async () => {
+    mocks.execute.isPending = true;
+    await act(async () => root.unmount());
+    const { default: Copilot } = await import("./Copilot");
+    root = createRoot(container);
+    await act(async () => root.render(<Copilot />));
+    const projectButton = Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.includes("Select test project"))!;
+    await act(async () => projectButton.click());
+    const executeButton = Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.includes("Execute as a tool action"))!;
+    expect(executeButton.disabled).toBe(true);
+  });
 });

@@ -54,4 +54,16 @@ describe("Voice and Captions transcription UI", () => {
     expect(mocks.transcribe.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ projectId: 9 }));
     expect(toast.error).toHaveBeenCalledWith("ASR provider unavailable");
   });
+
+  it("disables transcription submission while ASR is pending", async () => {
+    await act(async () => root.unmount());
+    mocks.transcribe.isPending = true;
+    const { default: VoiceCaptions } = await import("./VoiceCaptions");
+    root = createRoot(container);
+    await act(async () => root.render(<VoiceCaptions />));
+    const projectButton = Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.includes("Select test project"))!;
+    await act(async () => projectButton.click());
+    const button = Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Transcribe and generate subtitles"))!;
+    expect(button.disabled).toBe(true);
+  });
 });

@@ -58,4 +58,16 @@ describe("Media Library image generation UI", () => {
     expect(mocks.createImage.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ projectId: 9 }));
     expect(toast.error).toHaveBeenCalledWith("Image provider unavailable");
   });
+
+  it("disables image generation while the provider request is pending", async () => {
+    await act(async () => root.unmount());
+    mocks.createImage.isPending = true;
+    const { default: AssetLibrary } = await import("./AssetLibrary");
+    root = createRoot(container);
+    await act(async () => root.render(<AssetLibrary />));
+    const projectButton = Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.includes("Select test project"))!;
+    await act(async () => projectButton.click());
+    const button = Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Generate and save"))!;
+    expect(button.disabled).toBe(true);
+  });
 });
