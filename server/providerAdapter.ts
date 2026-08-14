@@ -1,5 +1,7 @@
 import { assertBuiltInOrFreeFirst, type ProviderPolicyCandidate } from "./providerPolicy";
 
+import { InferenceClient } from "@huggingface/inference";
+
 export type RegistryProvider = ProviderPolicyCandidate & { endpoint: string; modelId: string; provider: string };
 
 export function selectPreferredProvider(providers: RegistryProvider[], capability: string) {
@@ -41,6 +43,15 @@ export async function executeRegistryAsr(provider: RegistryProvider, payload: Re
   const response = await callRegistryProvider(provider, payload, 120_000);
   if (typeof response.text !== "string") throw new Error(`${provider.provider} returned no transcript text.`);
   return { text: response.text, language: typeof response.language === "string" ? response.language : "und", segments: Array.isArray(response.segments) ? response.segments : [] };
+}
+
+export async function executeRegistryTts(provider: RegistryProvider, text: string) {
+  if (!provider.endpoint.startsWith("https://router.huggingface.co/")) throw new Error("Public TTS execution is supported only through the official Hugging Face inference router.");
+  if (!process.env.HF_TOKEN) throw new Error("Hugging Face public TTS requires a configured server-side token.");
+  const audio = await new InferenceClient(process.env.HF_TOKEN).textToSpeech({ model: provider.modelId, inputs: text });
+  const bytes = Buffer.from(await audio.arrayBuffer());
+  if (!bytes.length) throw new Error("Hugging Face returned empty speech audio.");
+  return { audioBase64: bytes.toString("base64"), mimeType: audio.type.startsWith("audio/") ? audio.type : "audio/wav" };
 }
 
 /**

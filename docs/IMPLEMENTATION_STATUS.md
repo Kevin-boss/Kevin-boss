@@ -6,7 +6,7 @@ The application has a functional multi-tenant production workspace foundation. I
 
 The creator workflow supports project creation, structured AI script generation, source-recorded research, provenance-labelled claim extraction, AI image generation, S3-backed asset upload, asset-rights status, Whisper-based transcription, SRT/VTT export, asynchronous job records, cancellation and retry controls, and an action-only Copilot. The Copilot uses a constrained tool schema and persists the selected tool, JSON parameters, approval state, job reference, and audit event rather than emitting an unstructured conversational answer.
 
-The user interface includes a responsive dark/light production shell, workspace switching, dashboard, Script Studio, Research workspace, Media Library, Scene Editor foundation, Voice & Captions, job operations, agency/client workspace controls, and the action log for executable Copilot commands.
+The user interface includes a responsive dark/light production shell, workspace switching, dashboard, Script Studio, Research workspace, Media Library, Scene Editor foundation, Voice & Captions, job operations, agency/client workspace controls, and the action log for executable Copilot commands. Voice & Captions now lets a creator select an approved workspace voice, see whether it has a ready allowed provider, submit narration text, and preview the persisted audio asset after synthesis; the server remains responsible for provider mapping and verified commercial-consent enforcement.
 
 ## Deliberate Integration Boundaries
 
@@ -22,7 +22,8 @@ Production FFmpeg rendering, open-source TTS deployment, local-model inference, 
 | Image generation | Built-in server-side image access is already configured; generated images are stored through the platform storage service. |
 | Audio transcription | Built-in Whisper access is already configured. Audio must be reachable by URL and meet service limits. |
 | Public model inference | The official Hugging Face Inference Providers router is configured with a validated server-side `HF_TOKEN`. Registry adapters attach the token only to `https://router.huggingface.co/` requests; see `docs/CREDENTIAL_REQUIREMENTS.md`. |
-| TTS and open-weight models | The researched free-first baseline is a private adapter around Apache-licensed Kokoro-82M. Deploy it in a user-controlled environment, record model and voice licensing, then register the private endpoint and approved capabilities. XTTS-v2, F5-TTS, and GPL Piper variants require separate licence review before use. See `docs/SELF_HOSTED_TTS_RESEARCH.md`. |
+| Public TTS and open-weight models | The official Hugging Face InferenceClient path is implemented for approved public-provider voices using the validated server-side `HF_TOKEN`. It normalizes audio, persists a tenant-scoped asset, and retains free-first and verified-consent checks. Public output is treated as the model default and does not expose private voice controls. See `docs/CREDENTIAL_REQUIREMENTS.md`. |
+| Private Kokoro TTS | The researched free-first production baseline is a private adapter around Apache-licensed Kokoro-82M. Deploy it in a user-controlled environment, record model and voice licensing, then register approved capabilities and optional authentication. The private worker is the path for catalog-level gender, tone, accent, speed, and emotion controls. XTTS-v2, F5-TTS, and GPL Piper variants require separate licence review before use. See `docs/SELF_HOSTED_TTS_RESEARCH.md`. |
 | FFmpeg rendering and GPU jobs | Deploy a dedicated CPU/GPU worker environment with private object-storage access and a queue consumer. |
 | YouTube, TikTok, and Meta publishing | Obtain official application credentials, configure OAuth redirect URLs, complete any required platform review, and implement the corresponding adapter. |
 | Payment processing | Select and configure a payment provider through the provider boundary; do not put payment logic in the production core. |
@@ -41,4 +42,4 @@ For responsible operation, the production worker must retain model identifiers, 
 
 ## Next Engineering Steps
 
-The complete implementation backlog is maintained in `todo.md`. The highest-priority remaining work is a worker-based rendering pipeline, actual TTS provider integration, editable persisted timeline tracks, explicit citation outputs, official social adapter procedures, approval-aware schedules, and comprehensive integration tests.
+The complete implementation backlog is maintained in `todo.md`. The highest-priority remaining work is a worker-based final-rendering pipeline, editable persisted timeline tracks, explicit citation outputs, official social adapter procedures, and approval-aware schedules. Public TTS integration and its focused production coverage are complete; private realistic long-form voice and video remain worker-delivery work.

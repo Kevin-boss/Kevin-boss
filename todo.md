@@ -27,20 +27,24 @@
 - [x] Add a dedicated rights-enforcement test beyond asset metadata normalization and map each workflow test category to its test module.
 - [x] Verify API behavior, responsive UI, loading and error states, build quality, and core interaction flows.
 - [x] Add state and interaction verification for Script Studio, Research, Assets, Editor, Voice, Jobs, and Copilot workflows.
+- [x] Add an approved-voice synthesis control to the Voice & Captions workspace and cover selection, submission, pending, success, and failure states.
 - [x] Add explicit loading, success, and error-state tests for creator workflow queries and mutations, plus a documented verification matrix.
 - [x] Add explicit research citation records and source-grounded summaries to the research API and workspace.
-- [ ] Implement actual TTS generation and apply all catalog filters for gender, tone, accent, speed, and emotion.
+- [ ] Complete private-provider synthesis support for all catalog controls: gender, tone, accent, speed, and emotion. (Deferred pending private Kokoro worker deployment; public Hugging Face TTS intentionally uses the registered model-default voice.)
+- [x] Implement actual public-provider TTS generation with the validated Hugging Face InferenceClient path and documented public/private voice-control boundary.
+- [x] Verify whether the validated public Hugging Face provider contract supports an authorized natural-voice TTS route before replacing or extending the private Kokoro path.
+- [x] Add an official Hugging Face InferenceClient TTS adapter for approved public-provider voices while retaining consent and provenance checks.
 - [ ] Build official social-account, post, and scheduled-publishing procedures with provider adapters and approval gates. (Deferred by user; not part of current delivery scope.)
 - [x] Add plan, usage, notifications, and administrative health procedures and supporting UI.
 - [x] Add scene editing, scene-level regeneration, research citations, and platform-copy panels to Script Studio.
 - [x] Add folder/tag and licensing editing controls to the asset library.
 - [x] Persist editable timeline tracks and scene properties instead of read-only timeline visualization.
 - [x] Add caption-style controls and complete voice filter interaction in the Voice & Caption workspace.
-- [ ] Add API, integration, and UI flow tests for the implemented production workflows.
+- [x] Add API, integration, and UI flow tests for the implemented production workflows.
 - [x] Document local configuration, implementation limitations, provider setup, and next steps for external credentials and production workers.
 - [x] Continue credential-independent completion before requesting external keys.
-- [ ] Request and validate required external API credentials one at a time, in integration dependency order.
-- [ ] Record credential setup status and provider validation results in project documentation.
+- [ ] Request and validate remaining external API credentials when deferred social or private-worker integrations are activated. (Deferred by user; collect remaining API keys together at that stage.)
+- [x] Record credential setup status and provider validation results in project documentation.
 
 ---
 
@@ -52,7 +56,7 @@
 - [x] Add approval, notification, usage, and admin-health workflows.
 - [x] Add editable persisted track operations in the Timeline Editor.
 - [x] Implement a private render-worker endpoint boundary with tracked render jobs and safe unavailable states.
-- [ ] Add broad API and UI integration tests for completed production workflows.
+- [x] Add broad API and UI integration tests for completed production workflows.
 - [x] Add a targeted UI integration test for publishing-plan creation and approval-required status without official social account credentials.
 - [x] Assert the rendered publishing-plan list displays an awaiting-approval status after a scheduled plan is created without an official account.
 - [x] Add a focused production-workflow integration test covering the public-provider adapter’s secure authorization boundary alongside existing creator workflow contracts.
@@ -62,7 +66,7 @@
 - [x] Configure and validate the first required external provider key individually, then record its actual validation result.
 - [ ] Configure and validate social publishing credentials individually after the provider boundary is implemented.
 - [ ] Configure and validate worker/render credentials or private endpoints individually after worker deployment is selected.
-- [ ] Configure and validate TTS credentials individually after the approved TTS provider is selected.
+- [x] Configure and validate TTS credentials individually after the approved TTS provider is selected.
 - [x] Research and document a current self-hosted natural-voice TTS deployment path before requesting its private endpoint or credentials.
 - [x] Add a Kokoro-compatible private TTS adapter contract with voice-consent and provider provenance safeguards, plus controlled integration coverage.
 - [x] Persist explicit voice consent and approved-use scope, then reject synthesis unless the selected voice has verified commercial rights and consent.
@@ -71,19 +75,20 @@
 - [x] Add direct procedure-level coverage for administrator-recorded consent and the required before/after synthesis safety boundary.
 - [x] Add one end-to-end guarded flow test proving private TTS is blocked before consent is recorded and succeeds after `recordConsent` persists verified commercial consent.
 - [x] Add a deployment-readiness checklist for the private Kokoro worker, including health, authentication, consent, storage, and rollback controls.
-- [ ] Complete all provider link and configuration scaffolding before requesting remaining credentials together in a single consolidated step.
+- [x] Complete all provider link and configuration scaffolding before requesting remaining credentials together in a single consolidated step.
 - [x] Add server-side private worker configuration status checks and an administrator-facing readiness surface for TTS and final render workers.
 - [x] Distinguish endpoint, token, and fully-ready worker states; render explicit administrator-restricted and health-error states with UI coverage.
-- [ ] Align TTS and render configuration with verified public official endpoints so consolidated credential collection requests keys or tokens only.
+- [ ] Align final-render configuration with a verified official public render contract, if one is selected. (Deferred: final MP4 composition currently requires an administrator-registered private worker URL.)
+- [x] Align public TTS configuration with a verified official endpoint so the public provider requires only the validated server-side API token.
 - [x] Explicitly distinguish public-token provider calls from the final MP4 render worker, which remains a private service URL requirement until a verified public render contract is implemented.
 
 ---
 
 ## History note
 
-The remaining unchecked items represent work that is not yet complete or requires external credentials, workers, platform approvals, or provider-specific implementation. They must not be reported as finished until validated.
+The remaining unchecked items are deliberately deferred social-publishing or optional private-worker work that require external credentials, platform approvals, or administrator-controlled infrastructure. They must not be reported as finished until activated and validated.
 
-The user-directed delivery path remains **credential-free draft download**. The unchecked TTS, render-worker, and social-publishing entries are deliberately retained as deferred integration work; they do not block the Scene Editor's browser-local quick-draft WebM download.
+The user-directed delivery path remains **credential-free draft download**. Public Hugging Face TTS is validated; unchecked private-worker and social-publishing entries remain deferred integration work and do not block the Scene Editor's browser-local quick-draft WebM download.
 - [x] Prioritize free-tier, open-source, and self-hostable providers before paid APIs.
 - [x] Prefer local or private-endpoint TTS and rendering boundaries where practical.
 - [x] Do not request an external API key when a validated free or self-hosted alternative exists.

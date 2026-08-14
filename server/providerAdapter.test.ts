@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { callRegistryProvider, createProviderExecutor, executeRegistryAsr, executeRegistryImage, executeRegistryText, getProviderAdapter, registerProviderAdapter } from "./providerAdapter";
+
+const mocks = vi.hoisted(() => ({ textToSpeech: vi.fn() }));
+vi.mock("@huggingface/inference", () => ({ InferenceClient: class { textToSpeech = mocks.textToSpeech; } }));
+
+import { callRegistryProvider, createProviderExecutor, executeRegistryAsr, executeRegistryImage, executeRegistryText, executeRegistryTts, getProviderAdapter, registerProviderAdapter } from "./providerAdapter";
 
 const provider = { id: 1, provider: "local", endpoint: "https://local.test/v1", modelId: "free-model", costTier: "free" as const, selfHosted: "yes" as const, commercialUse: "allowed" as const, enabled: "yes" as const, capabilities: ["text", "image", "asr", "future"] };
 
@@ -23,6 +27,12 @@ describe("registry provider adapter", () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 })));
     await callRegistryProvider({ ...provider, endpoint: "https://router.huggingface.co/v1/chat/completions" }, { messages: [] });
     expect(vi.mocked(fetch).mock.calls[0]![1]).toMatchObject({ headers: expect.objectContaining({ authorization: `Bearer ${process.env.HF_TOKEN}` }) });
+  });
+
+  it("normalizes public Hugging Face text-to-speech audio without exposing its token to callers", async () => {
+    mocks.textToSpeech.mockResolvedValue(new Blob(["audio"], { type: "audio/mpeg" }));
+    await expect(executeRegistryTts({ ...provider, provider: "huggingface", endpoint: "https://router.huggingface.co/hf-inference/models/hexgrad/Kokoro-82M", modelId: "hexgrad/Kokoro-82M", capabilities: ["tts"] }, "Hello world")).resolves.toEqual({ audioBase64: Buffer.from("audio").toString("base64"), mimeType: "audio/mpeg" });
+    expect(mocks.textToSpeech).toHaveBeenCalledWith({ model: "hexgrad/Kokoro-82M", inputs: "Hello world" });
   });
 
   it("forces future adapters through free-first selection before execution", async () => {

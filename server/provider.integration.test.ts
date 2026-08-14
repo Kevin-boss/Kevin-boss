@@ -1,4 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
+const hfMocks = vi.hoisted(() => ({ textToSpeech: vi.fn() }));
+vi.mock("@huggingface/inference", () => ({ InferenceClient: class { textToSpeech = hfMocks.textToSpeech; } }));
+
 import { appRouter } from "./routers";
 import { getDb } from "./db";
 import { createJob, recordAudit, requireProjectAccess, requireWorkspaceAccess, updateJob } from "./platform";
@@ -17,6 +20,7 @@ const textProvider = { ...provider, id: 3, endpoint: "https://local.test/text", 
 const publicTextProvider = { ...textProvider, id: 33, name: "Hugging Face public text", provider: "huggingface", endpoint: "https://router.huggingface.co/v1/chat/completions", modelId: "openai/gpt-oss-20b:cheapest", selfHosted: "no" as const };
 const asrProvider = { ...provider, id: 4, endpoint: "https://local.test/asr", modelId: "free-asr", capabilities: ["asr"] };
 const ttsProvider = { ...provider, id: 5, endpoint: "https://local.test/tts", modelId: "free-tts", capabilities: ["tts"] };
+const publicTtsProvider = { ...ttsProvider, id: 55, name: "Hugging Face public TTS", provider: "huggingface", endpoint: "https://router.huggingface.co/hf-inference/models/hexgrad/Kokoro-82M", modelId: "hexgrad/Kokoro-82M", selfHosted: "no" as const };
 const videoProvider = { ...provider, id: 6, endpoint: "https://local.test/render", modelId: "free-render", capabilities: ["video"] };
 const paidOnly = <T extends typeof provider>(configuredProvider: T) => ({ ...configuredProvider, costTier: "paid" as const, selfHosted: "no" as const });
 const user = { id: 7, openId: "provider-user", email: "provider@example.com", name: "Provider User", loginMethod: "manus", role: "user" as const, createdAt: new Date(), updatedAt: new Date(), lastSignedIn: new Date() };
@@ -125,6 +129,23 @@ describe("provider-backed production procedures", () => {
     expect(result).toMatchObject({ jobId: 104, assetId: 58, url: "https://local.test/voice.wav" });
     expect(fetch).toHaveBeenCalledWith("https://local.test/tts", expect.objectContaining({ method: "POST" }));
     expect(JSON.parse(vi.mocked(fetch).mock.calls[0]![1]!.body as string)).toMatchObject({ input: "Hello", response_format: "wav" });
+  });
+
+  it("synthesizes approved public Hugging Face TTS audio through the server-side client and stores the result", async () => {
+    vi.clearAllMocks();
+    vi.mocked(requireProjectAccess).mockResolvedValue({ project: { id: 9, workspaceId: 3 } } as any);
+    vi.mocked(createJob).mockResolvedValue(154);
+    vi.mocked(updateJob).mockResolvedValue(undefined as any);
+    vi.mocked(storagePut).mockResolvedValue({ key: "tts/public-voice.mp3", url: "https://local.test/public-voice.mp3" });
+    hfMocks.textToSpeech.mockResolvedValue(new Blob(["public-audio"], { type: "audio/mpeg" }));
+    const approvedVoice = { id: 13, workspaceId: 3, provider: "huggingface", providerVoiceId: "hf-default", commercialUse: "allowed" as const };
+    const verifiedConsent = { voiceId: 13, workspaceId: 3, status: "verified" as const, approvedUseScope: "commercial_tts" as const, evidenceReference: "consent/hf-default.pdf", verifiedByUserId: 7, verifiedAt: new Date() };
+    vi.mocked(getDb).mockResolvedValue({ select: () => ({ from: (table: unknown) => ({ where: () => queryRows(table === voices ? [approvedVoice] : table === voiceConsents ? [verifiedConsent] : [publicTtsProvider]) }) }), insert: () => ({ values: async () => [{ insertId: 68 }] }) } as any);
+
+    await expect(appRouter.createCaller(ctx).production.voice.synthesize({ projectId: 9, providerId: 55, voiceId: "hf-default", text: "A public-provider voice test.", language: "en" })).resolves.toMatchObject({ jobId: 154, assetId: 68, url: "https://local.test/public-voice.mp3" });
+    expect(hfMocks.textToSpeech).toHaveBeenCalledWith({ model: "hexgrad/Kokoro-82M", inputs: "A public-provider voice test." });
+    expect(storagePut).toHaveBeenCalledWith(expect.stringContaining("workspaces/3/tts/"), Buffer.from("public-audio"), "audio/mpeg");
+    expect(updateJob).toHaveBeenLastCalledWith(154, expect.objectContaining({ status: "completed" }), expect.objectContaining({ message: "Public-provider TTS audio ready" }));
   });
 
   it("persists administrator-verified commercial consent before a voice can be used by the private worker", async () => {

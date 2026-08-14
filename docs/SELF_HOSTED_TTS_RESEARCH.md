@@ -29,6 +29,20 @@ Workspace administrators record consent through the protected `production.voice.
 
 The guarded-flow integration test additionally proves the required order of operations: private TTS is rejected before a verified consent exists; an administrator records verified `commercial_tts` consent through the supported procedure; the same synthesis request then succeeds. This prevents a consent value supplied only by a client request from bypassing the persisted approval boundary.
 
+## Public Inference Assessment
+
+Hugging Face's official InferenceClient documentation includes a token-authenticated `textToSpeech` method that accepts a model identifier and text input.[5] The official Kokoro model page identifies the model as a text-to-speech model, Apache-2.0 licensed, and supported by Hugging Face Inference Providers.[6] AI Content OS now implements this as a **public token-only speech path** using the already validated `HF_TOKEN`: the server calls `InferenceClient.textToSpeech`, normalizes the returned audio blob, writes it to tenant-scoped storage, and returns the usual job and asset result. Adapter and production-route tests cover that flow.
+
+| Speech control | Public Hugging Face TTS | Private Kokoro worker |
+|---|---|---|
+| Provider configuration | Official public router plus server-side `HF_TOKEN` | Administrator-controlled authenticated worker deployment |
+| Voice behavior | The registered model's default output; the application still requires a matching approved voice record and verified commercial consent | Explicit approved `voice` identifier passed to the worker |
+| Gender, tone, accent | Catalog metadata only; not sent to the public provider | Supported through the private approved-voice catalogue and worker configuration |
+| Speed and emotion | Not sent to the public provider; treated as unavailable rather than silently simulated | Sent to the private worker payload when configured and supported |
+| Long-form, multi-track final video | Not a compositing solution | Intended source for the separate private final-render workflow |
+
+> A successful public provider call does not itself prove consent, licensed narrator identity, or a selectable voice characteristic. AI Content OS preserves the persisted approved-voice and verified-commercial-consent checks for both paths; the private worker remains the path that can honor catalog-level voice controls.
+
 ## Deployment Recommendation
 
 Deploy the model and adapter as an isolated private service rather than inside the request-scoped web application. The adapter should load approved Kokoro voices, write generated WAV files to tenant-scoped object storage, and return a signed or private storage reference to the existing render worker. The private worker can then join voice, captions, licensed media, and scene timing into final MP4 output.
@@ -37,7 +51,7 @@ Deploy the model and adapter as an isolated private service rather than inside t
 
 ## Required User-Controlled Input
 
-To validate this integration, the next required item is the base URL of the deployed private adapter. If the adapter requires a token, request it separately only after the URL is reachable. A public model repository or hosted demonstration is not a substitute for a tenant-controlled production endpoint.
+No additional public endpoint URL is needed for the implemented Hugging Face speech path: it uses the official public router and the validated `HF_TOKEN`. A private worker remains optional. If it is later deployed, an administrator registers its internal endpoint and supplies `TTS_WORKER_TOKEN` only when authentication is enabled; users are not asked to provide private deployment URLs.
 
 ## References
 
@@ -45,3 +59,5 @@ To validate this integration, the next required item is the base URL of the depl
 [2]: https://huggingface.co/coqui/XTTS-v2 "Coqui XTTS-v2 model card"
 [3]: https://github.com/SWivid/F5-TTS "F5-TTS official repository"
 [4]: https://github.com/OHF-Voice/piper1-gpl "OHF Voice Piper1-GPL official repository"
+[5]: https://huggingface.co/docs/huggingface.js/en/inference/README "Hugging Face JavaScript Inference documentation"
+[6]: https://huggingface.co/hexgrad/Kokoro-82M "hexgrad/Kokoro-82M official model page"
