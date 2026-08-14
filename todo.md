@@ -60,6 +60,7 @@
 - [ ] Configure and validate social publishing credentials individually after the provider boundary is implemented.
 - [ ] Configure and validate worker/render credentials or private endpoints individually after worker deployment is selected.
 - [ ] Configure and validate TTS credentials individually after the approved TTS provider is selected.
+- [x] Research and document a current self-hosted natural-voice TTS deployment path before requesting its private endpoint or credentials.
 
 ---
 

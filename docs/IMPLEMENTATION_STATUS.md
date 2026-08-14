@@ -21,7 +21,7 @@ Production FFmpeg rendering, open-source TTS deployment, local-model inference, 
 | Script generation, research synthesis, Copilot | Built-in server-side LLM access is already configured; consumption is tracked by the hosting platform. |
 | Image generation | Built-in server-side image access is already configured; generated images are stored through the platform storage service. |
 | Audio transcription | Built-in Whisper access is already configured. Audio must be reachable by URL and meet service limits. |
-| TTS and open-weight models | Deploy a permitted provider, record model/voice licensing, then register its private endpoint and approved capabilities. |
+| TTS and open-weight models | The researched free-first baseline is a private adapter around Apache-licensed Kokoro-82M. Deploy it in a user-controlled environment, record model and voice licensing, then register the private endpoint and approved capabilities. XTTS-v2, F5-TTS, and GPL Piper variants require separate licence review before use. See `docs/SELF_HOSTED_TTS_RESEARCH.md`. |
 | FFmpeg rendering and GPU jobs | Deploy a dedicated CPU/GPU worker environment with private object-storage access and a queue consumer. |
 | YouTube, TikTok, and Meta publishing | Obtain official application credentials, configure OAuth redirect URLs, complete any required platform review, and implement the corresponding adapter. |
 | Payment processing | Select and configure a payment provider through the provider boundary; do not put payment logic in the production core. |
