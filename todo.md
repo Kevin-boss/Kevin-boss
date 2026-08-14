@@ -25,9 +25,9 @@
 - [x] Add database migrations and apply the schema changes.
 - [x] Add automated workflow coverage for authorization, AI task validation, structured scripts, job transitions, Copilot tools, and rights checks.
 - [x] Add a dedicated rights-enforcement test beyond asset metadata normalization and map each workflow test category to its test module.
-- [ ] Verify API behavior, responsive UI, loading and error states, build quality, and core interaction flows.
+- [x] Verify API behavior, responsive UI, loading and error states, build quality, and core interaction flows.
 - [x] Add state and interaction verification for Script Studio, Research, Assets, Editor, Voice, Jobs, and Copilot workflows.
-- [ ] Add explicit loading, success, and error-state tests for creator workflow queries and mutations, plus a documented verification matrix.
+- [x] Add explicit loading, success, and error-state tests for creator workflow queries and mutations, plus a documented verification matrix.
 - [x] Add explicit research citation records and source-grounded summaries to the research API and workspace.
 - [ ] Implement actual TTS generation and apply all catalog filters for gender, tone, accent, speed, and emotion.
 - [ ] Build official social-account, post, and scheduled-publishing procedures with provider adapters and approval gates. (Deferred by user; not part of current delivery scope.)
@@ -97,10 +97,10 @@ The user-directed delivery path remains **credential-free draft download**. The 
 - [x] Add Timeline Editor property-mutation and final-export interaction coverage beyond the quick-draft fallback.
 - [x] Map each implemented workflow to its loading, empty, success, and error test coverage before closing broad verification.
 - [x] Add explicit pending/loading interaction tests for Research, Media Library, Voice & Captions, and Copilot mutations.
-- [ ] Add explicit query-loading UI coverage for Research, Media Library, Voice & Captions, and Copilot data queries.
+- [x] Add explicit query-loading UI coverage for Research, Media Library, Voice & Captions, and Copilot data queries.
 - [x] Add selectable resolution and quality profiles to the browser-local WebM quick-draft renderer.
 - [x] Add an in-browser WebM quick-draft preview with an explicit download action after generation.
 - [x] Add accessible draft-rendering progress feedback and cancellation-safe cleanup for browser-local export.
-- [ ] Add production quality-profile controls that clearly distinguish the local draft renderer from natural-voice, realistic long-form worker rendering.
+- [x] Add production quality-profile controls that clearly distinguish the local draft renderer from natural-voice, realistic long-form worker rendering.
 - [x] Document the private-worker, licensed TTS, and GPU rendering requirements for realistic videos and natural voices approaching one hour.
 - [x] Add abort support and unmount-safe cleanup for in-flight browser-local WebM rendering, with automated coverage.

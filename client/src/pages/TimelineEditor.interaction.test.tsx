@@ -79,9 +79,12 @@ describe("Timeline Editor interactions", () => {
     expect(container.querySelectorAll("input")[1]!.value).toBe("dissolve");
   });
 
-  it("submits the final-export request and refreshes completed exports", async () => {
+  it("distinguishes the local draft from the production-worker path and submits the final export request", async () => {
     mocks.render.mutateAsync.mockResolvedValue({ available: false, message: "No private render worker is configured." });
-    const renderButton = Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Render MP4"))!;
+    expect(container.textContent).toContain("Browser-local quick draft");
+    expect(container.textContent).toContain("Production worker MP4");
+    expect(container.textContent).toContain("natural voice, realistic footage, and long-form jobs approaching one hour");
+    const renderButton = Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Queue production MP4"))!;
     await act(async () => { renderButton.click(); await Promise.resolve(); });
     expect(mocks.render.mutateAsync).toHaveBeenCalledWith({ projectId: 9, versionId: 17, preset: "youtube_1080p" });
     expect(mocks.refetchExports).toHaveBeenCalledOnce();
@@ -95,7 +98,7 @@ describe("Timeline Editor interactions", () => {
     root = createRoot(container);
     await act(async () => root.render(<TimelineEditor />));
     await selectProject();
-    const renderButton = Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Render MP4"))!;
+    const renderButton = Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Queue production MP4"))!;
     expect(renderButton.disabled).toBe(true);
   });
 });

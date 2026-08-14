@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 const mocks = vi.hoisted(() => ({
   execute: { isPending: false, mutateAsync: vi.fn() },
-  list: { data: [], refetch: vi.fn() },
+  list: { data: [], refetch: vi.fn(), isLoading: false },
 }));
 
 vi.mock("@/lib/trpc", () => ({ trpc: { copilot: { list: { useQuery: () => mocks.list }, execute: { useMutation: () => mocks.execute } } } }));
@@ -26,6 +26,7 @@ describe("Copilot project action UI", () => {
   beforeEach(async () => {
     vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
     mocks.execute.isPending = false;
+    mocks.list.isLoading = false;
     mocks.execute.mutateAsync.mockReset();
     mocks.list.refetch.mockReset();
     vi.mocked(toast.success).mockReset();
@@ -78,5 +79,12 @@ describe("Copilot project action UI", () => {
     await act(async () => projectButton.click());
     const executeButton = Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.includes("Execute as a tool action"))!;
     expect(executeButton.disabled).toBe(true);
+  });
+
+  it("shows an accessible action-log loading state for the selected project", async () => {
+    mocks.list.isLoading = true;
+    const projectButton = Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.includes("Select test project"))!;
+    await act(async () => projectButton.click());
+    expect(container.querySelector('[role="status"]')?.textContent).toContain("Loading executable action log…");
   });
 });

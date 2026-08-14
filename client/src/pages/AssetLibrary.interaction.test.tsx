@@ -4,11 +4,11 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
 
-const mocks = vi.hoisted(() => ({ createImage: { isPending: false, mutateAsync: vi.fn() }, refetch: vi.fn() }));
+const mocks = vi.hoisted(() => ({ createImage: { isPending: false, mutateAsync: vi.fn() }, refetch: vi.fn(), isLibraryLoading: false }));
 
 vi.mock("@/lib/trpc", () => {
   const mutation = (value = { isPending: false, mutateAsync: vi.fn() }) => ({ useMutation: () => value });
-  return { trpc: { production: { assets: { list: { useQuery: () => ({ data: [], refetch: mocks.refetch }) }, folders: { list: { useQuery: () => ({ data: [], refetch: vi.fn() }) }, create: mutation() }, updateMetadata: mutation(), createImage: mutation(mocks.createImage), upload: mutation() } } } };
+  return { trpc: { production: { assets: { list: { useQuery: () => ({ data: [], refetch: mocks.refetch, isLoading: mocks.isLibraryLoading }) }, folders: { list: { useQuery: () => ({ data: [], refetch: vi.fn(), isLoading: mocks.isLibraryLoading }) }, create: mutation() }, updateMetadata: mutation(), createImage: mutation(mocks.createImage), upload: mutation() } } } };
 });
 vi.mock("@/hooks/useWorkspace", () => ({ useWorkspace: () => ({ activeWorkspaceId: 3 }) }));
 vi.mock("@/components/PageHeader", () => ({ PageHeader: ({ title }: { title: string }) => <header>{title}</header> }));
@@ -27,6 +27,7 @@ describe("Media Library image generation UI", () => {
   beforeEach(async () => {
     vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
     mocks.createImage.isPending = false;
+    mocks.isLibraryLoading = false;
     mocks.createImage.mutateAsync.mockReset();
     mocks.refetch.mockReset();
     vi.mocked(toast.success).mockReset();
@@ -69,5 +70,14 @@ describe("Media Library image generation UI", () => {
     await act(async () => projectButton.click());
     const button = Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Generate and save"))!;
     expect(button.disabled).toBe(true);
+  });
+
+  it("shows an accessible loading state while workspace assets are being queried", async () => {
+    await act(async () => root.unmount());
+    mocks.isLibraryLoading = true;
+    const { default: AssetLibrary } = await import("./AssetLibrary");
+    root = createRoot(container);
+    await act(async () => root.render(<AssetLibrary />));
+    expect(container.querySelector('[role="status"]')?.textContent).toContain("Loading workspace assets…");
   });
 });

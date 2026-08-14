@@ -4,9 +4,9 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
 
-const mocks = vi.hoisted(() => ({ transcribe: { isPending: false, mutateAsync: vi.fn() } }));
+const mocks = vi.hoisted(() => ({ transcribe: { isPending: false, mutateAsync: vi.fn() }, isVoiceLoading: false }));
 
-vi.mock("@/lib/trpc", () => ({ trpc: { production: { voice: { list: { useQuery: () => ({ data: [] }) }, transcribe: { useMutation: () => mocks.transcribe } } } } }));
+vi.mock("@/lib/trpc", () => ({ trpc: { production: { voice: { list: { useQuery: () => ({ data: [], isLoading: mocks.isVoiceLoading }) }, transcribe: { useMutation: () => mocks.transcribe } } } } }));
 vi.mock("@/hooks/useWorkspace", () => ({ useWorkspace: () => ({ activeWorkspaceId: 3 }) }));
 vi.mock("@/components/PageHeader", () => ({ PageHeader: ({ title }: { title: string }) => <header>{title}</header> }));
 vi.mock("@/components/ProjectPicker", () => ({ ProjectPicker: ({ onChange }: { onChange: (id: number) => void }) => <button type="button" onClick={() => onChange(9)}>Select test project</button> }));
@@ -24,6 +24,7 @@ describe("Voice and Captions transcription UI", () => {
   beforeEach(async () => {
     vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
     mocks.transcribe.isPending = false;
+    mocks.isVoiceLoading = false;
     mocks.transcribe.mutateAsync.mockReset();
     vi.mocked(toast.success).mockReset();
     vi.mocked(toast.error).mockReset();
@@ -65,5 +66,14 @@ describe("Voice and Captions transcription UI", () => {
     await act(async () => projectButton.click());
     const button = Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Transcribe and generate subtitles"))!;
     expect(button.disabled).toBe(true);
+  });
+
+  it("shows an accessible loading state while approved workspace voices are being queried", async () => {
+    await act(async () => root.unmount());
+    mocks.isVoiceLoading = true;
+    const { default: VoiceCaptions } = await import("./VoiceCaptions");
+    root = createRoot(container);
+    await act(async () => root.render(<VoiceCaptions />));
+    expect(container.querySelector('[role="status"]')?.textContent).toContain("Loading approved workspace voices…");
   });
 });
