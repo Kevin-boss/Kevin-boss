@@ -1,0 +1,49 @@
+[2026-08-14T01:15:58.348Z] {"timestamp":1786670156335,"level":"DEBUG","args":["[Manus] Debug collector initialized (no rrweb, UI events only)"],"stack":null}
+[2026-08-14T01:15:58.348Z] {"timestamp":1786670156341,"level":"DEBUG","args":["[vite] connected."],"stack":null}
+[2026-08-14T01:15:58.349Z] {"timestamp":1786670156346,"level":"DEBUG","args":["[Manus] Debug collector initialized (no rrweb, UI events only)"],"stack":null}
+[2026-08-14T01:15:58.363Z] {"timestamp":1786670156358,"level":"DEBUG","args":["[Manus] Debug collector initialized (no rrweb, UI events only)"],"stack":null}
+[2026-08-14T01:15:58.363Z] {"timestamp":1786670156359,"level":"DEBUG","args":["[vite] connected."],"stack":null}
+[2026-08-14T01:15:58.369Z] {"timestamp":1786670156359,"level":"DEBUG","args":["[Manus] Debug collector initialized (no rrweb, UI events only)"],"stack":null}
+[2026-08-14T01:15:58.369Z] {"timestamp":1786670156372,"level":"DEBUG","args":["[vite] connected."],"stack":null}
+[2026-08-14T01:15:58.391Z] {"timestamp":1786670156386,"level":"DEBUG","args":["[Manus] Debug collector initialized (no rrweb, UI events only)"],"stack":null}
+[2026-08-14T01:15:58.391Z] {"timestamp":1786670156395,"level":"DEBUG","args":["[vite] connected."],"stack":null}
+[2026-08-14T01:16:00.887Z] {"timestamp":1786670158884,"level":"DEBUG","args":["[Manus] Debug collector initialized (no rrweb, UI events only)"],"stack":null}
+[2026-08-14T01:16:00.887Z] {"timestamp":1786670158896,"level":"DEBUG","args":["[vite] connected."],"stack":null}
+[2026-08-14T01:16:00.887Z] {"timestamp":1786670159138,"level":"INFO","args":["%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools","font-weight:bold"],"stack":null}
+[2026-08-14T01:16:00.909Z] {"timestamp":1786670158900,"level":"DEBUG","args":["[Manus] Debug collector initialized (no rrweb, UI events only)"],"stack":null}
+[2026-08-14T01:16:00.909Z] {"timestamp":1786670158917,"level":"DEBUG","args":["[vite] connected."],"stack":null}
+[2026-08-14T01:16:00.909Z] {"timestamp":1786670159140,"level":"INFO","args":["%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools","font-weight:bold"],"stack":null}
+[2026-08-14T01:16:00.910Z] {"timestamp":1786670158908,"level":"DEBUG","args":["[Manus] Debug collector initialized (no rrweb, UI events only)"],"stack":null}
+[2026-08-14T01:16:00.910Z] {"timestamp":1786670158956,"level":"INFO","args":["%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools","font-weight:bold"],"stack":null}
+[2026-08-14T01:16:00.910Z] {"timestamp":1786670159060,"level":"DEBUG","args":["[vite] connected."],"stack":null}
+[2026-08-14T01:16:00.922Z] {"timestamp":1786670158919,"level":"DEBUG","args":["[Manus] Debug collector initialized (no rrweb, UI events only)"],"stack":null}
+[2026-08-14T01:16:00.922Z] {"timestamp":1786670158937,"level":"DEBUG","args":["[vite] connected."],"stack":null}
+[2026-08-14T01:16:00.922Z] {"timestamp":1786670159159,"level":"INFO","args":["%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools","font-weight:bold"],"stack":null}
+[2026-08-14T01:16:00.944Z] {"timestamp":1786670158936,"level":"DEBUG","args":["[Manus] Debug collector initialized (no rrweb, UI events only)"],"stack":null}
+[2026-08-14T01:16:00.944Z] {"timestamp":1786670158953,"level":"DEBUG","args":["[vite] connected."],"stack":null}
+[2026-08-14T01:16:00.944Z] {"timestamp":1786670159178,"level":"INFO","args":["%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools","font-weight:bold"],"stack":null}
+[2026-08-14T01:16:03.979Z] {"timestamp":1786670161972,"level":"DEBUG","args":["[Manus] Debug collector initialized (no rrweb, UI events only)"],"stack":null}
+[2026-08-14T01:16:03.980Z] {"timestamp":1786670161979,"level":"DEBUG","args":["[vite] connected."],"stack":null}
+[2026-08-14T01:16:03.980Z] {"timestamp":1786670162106,"level":"INFO","args":["%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools","font-weight:bold"],"stack":null}
+[2026-08-14T01:16:04.207Z] {"timestamp":1786670162204,"level":"DEBUG","args":["[Manus] Debug collector initialized (no rrweb, UI events only)"],"stack":null}
+[2026-08-14T01:16:04.207Z] {"timestamp":1786670162222,"level":"DEBUG","args":["[vite] connected."],"stack":null}
+[2026-08-14T01:16:04.207Z] {"timestamp":1786670162325,"level":"INFO","args":["%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools","font-weight:bold"],"stack":null}
+[2026-08-14T01:16:04.226Z] {"timestamp":1786670162192,"level":"DEBUG","args":["[Manus] Debug collector initialized (no rrweb, UI events only)"],"stack":null}
+[2026-08-14T01:16:04.226Z] {"timestamp":1786670162195,"level":"DEBUG","args":["[vite] connected."],"stack":null}
+[2026-08-14T01:16:04.226Z] {"timestamp":1786670162364,"level":"INFO","args":["%cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools","font-weight:bold"],"stack":null}
+---SERVER---
+[2026-08-14T01:02:21.199Z] Starting dev server with command: pnpm run dev
+[2026-08-14T01:02:22.324Z] > ai-content-os@1.0.0 dev /home/ubuntu/ai-content-os
+[2026-08-14T01:02:22.324Z] > NODE_ENV=development tsx watch server/_core/index.ts
+[2026-08-14T01:02:23.090Z] [OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-14T01:02:23.194Z] Server running on http://localhost:3000/
+[2026-08-14T01:08:33.272Z] 1:08:33 AM [tsx] change in ./server/routers.ts Restarting...
+[2026-08-14T01:08:34.088Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-14T01:08:34.207Z] Server running on http://localhost:3000/
+[2026-08-14T01:09:06.789Z] 1:09:06 AM [tsx] change in ./server/routers/production.ts Restarting...
+[2026-08-14T01:09:07.552Z] c[OAuth] Initialized with baseURL: https://api.manus.im
+[2026-08-14T01:09:07.663Z] Server running on http://localhost:3000/
+[2026-08-14T01:15:36.888Z] 1:15:36 AM [vite] (client) page reload index.html
+[2026-08-14T01:15:55.739Z] [baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
+[2026-08-14T01:15:58.399Z] 1:15:58 AM [vite] (client) ✨ new dependencies optimized: @radix-ui/react-avatar, @radix-ui/react-dropdown-menu, @radix-ui/react-dialog, @radix-ui/react-separator
+[2026-08-14T01:15:58.399Z] 1:15:58 AM [vite] (client) ✨ optimized dependencies changed. reloading

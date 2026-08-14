@@ -1,0 +1,37 @@
+# Project TODO
+
+- [x] Establish multi-tenant domain model for organizations, workspaces, clients, memberships, and scoped roles.
+- [x] Add tenant-aware authorization helpers that enforce owner, admin, editor, reviewer, viewer, and client permissions.
+- [x] Implement project, video, version, scene, track, and structured-script persistence with tenant boundaries.
+- [x] Implement the asset library data model with folders, tags, search metadata, derivatives, licensing, attribution, and rights status.
+- [ ] Implement provider registry and AI task contracts for LLM, TTS, transcription, image generation, and media generation fallbacks.
+- [x] Implement the AI Script Studio API with structured scene JSON, hook, visual prompt, B-roll, transition, SFX, and CTA output.
+- [ ] Implement the research workspace API with source records, claim classification, citations, and verified-versus-AI-generated visual status.
+- [ ] Implement TTS voice-catalog filters, transcription records, word-level timing, and SRT/VTT caption artifacts.
+- [x] Implement durable asynchronous job records with progress, retries, cancellation, errors, and job-event activity history.
+- [ ] Implement the video render manifest, export presets, render quality checks, and output-download metadata.
+- [ ] Implement social account, post, schedule, and integration-status models using official API adapter boundaries.
+- [x] Implement AI Copilot command parsing into auditable executable tool actions with approval-aware state changes.
+- [ ] Implement usage, plan, notification, audit-log, and admin-system-health foundations.
+- [x] Create a premium, responsive application shell with workspace switcher, command launcher, theme support, and accessible navigation.
+- [x] Build the dashboard and project workspace with live job status, content pipeline stages, creation entry points, and progress states.
+- [ ] Build the Script Studio with structured scene editing, research citations, regeneration controls, and platform-copy panels.
+- [x] Build the research workspace with clear verified, user-provided, and AI-generated information distinctions.
+- [ ] Build the media asset library with search, filter, licensing, rights, and upload-ready empty states.
+- [ ] Build the timeline editor foundation with video, audio, caption, overlay, and scene tracks plus property editing.
+- [ ] Build the Voice and Caption workspace with voice filtering, transcript review, caption styling, and subtitle export controls.
+- [ ] Build the content calendar, social account manager, publishing review, and platform-specific adaptation workspace.
+- [ ] Build the analytics, agency/client, approvals, and admin workspace foundations.
+- [x] Add database migrations and apply the schema changes.
+- [ ] Add unit tests for authorization, AI task validation, structured scripts, job transitions, Copilot tools, and rights checks.
+- [ ] Verify API behavior, responsive UI, loading and error states, build quality, and core interaction flows.
+- [ ] Add explicit research citation records and source-grounded summaries to the research API and workspace.
+- [ ] Implement actual TTS generation and apply all catalog filters for gender, tone, accent, speed, and emotion.
+- [ ] Build official social-account, post, and scheduled-publishing procedures with provider adapters and approval gates.
+- [ ] Add plan, usage, notifications, and administrative health procedures and supporting UI.
+- [ ] Add scene editing, scene-level regeneration, research citations, and platform-copy panels to Script Studio.
+- [ ] Add folder/tag and licensing editing controls to the asset library.
+- [ ] Persist editable timeline tracks and scene properties instead of read-only timeline visualization.
+- [ ] Add caption-style controls and complete voice filter interaction in the Voice & Caption workspace.
+- [ ] Add API, integration, and UI flow tests for the implemented production workflows.
+- [x] Document local configuration, implementation limitations, provider setup, and next steps for external credentials and production workers.

@@ -4,17 +4,38 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
+import ScriptStudio from "./pages/ScriptStudio";
+import DashboardLayout from "./components/DashboardLayout";
+import Research from "./pages/Research";
+import AssetLibrary from "./pages/AssetLibrary";
+import Copilot from "./pages/Copilot";
+import TimelineEditor from "./pages/TimelineEditor";
+import VoiceCaptions from "./pages/VoiceCaptions";
+import Jobs from "./pages/Jobs";
+import Workspace from "./pages/Workspace";
+import FoundationPage from "./pages/FoundationPage";
+import Publishing from "./pages/Publishing";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
-    <Switch>
-      <Route path={"/"} component={Home} />
+    <DashboardLayout><Switch>
+      <Route path={"/"} component={Dashboard} />
+      <Route path={"/projects"} component={Dashboard} />
+      <Route path={"/studio"} component={ScriptStudio} />
+      <Route path={"/research"} component={Research} />
+      <Route path={"/assets"} component={AssetLibrary} />
+      <Route path={"/editor"} component={TimelineEditor} />
+      <Route path={"/voice"} component={VoiceCaptions} />
+      <Route path={"/jobs"} component={Jobs} />
+      <Route path={"/copilot"} component={Copilot} />
+      <Route path={"/workspace"} component={Workspace} />
+      <Route path={"/publish"} component={Publishing} />
+      <Route path={"/analytics"}><FoundationPage eyebrow="Intelligence" title="Analytics workspace" description="Performance records are designed to ingest only official platform data. Connect approved accounts to begin synchronizing verified views, watch time, engagement, and publication state." /></Route>
+      <Route path={"/settings"}><FoundationPage eyebrow="System configuration" title="Workspace settings" description="Manage workspace governance, provider configuration, secure integrations, usage policies, and deployment options from the administrative foundation." /></Route>
       <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
       <Route component={NotFound} />
-    </Switch>
+    </Switch></DashboardLayout>
   );
 }
 
@@ -27,8 +48,8 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider
-        defaultTheme="light"
-        // switchable
+        defaultTheme="dark"
+        switchable
       >
         <TooltipProvider>
           <Toaster />
