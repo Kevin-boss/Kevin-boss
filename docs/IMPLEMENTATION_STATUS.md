@@ -28,7 +28,9 @@ Production FFmpeg rendering, open-source TTS deployment, local-model inference, 
 
 ## Download-first export scope
 
-Cross-platform publishing and social OAuth are intentionally deferred. The current product exposes export presets for landscape, vertical, and square output; submits versioned video documents to a private render-worker boundary; records completed worker-returned video files as tenant-scoped video assets; and generates signed download URLs only after access checks. A render worker must return a `storageKey` in its JSON response for an export to become downloadable. When no worker endpoint is configured, the application creates a failed job with `RENDER_WORKER_UNAVAILABLE` rather than pretending that a video exists.
+Cross-platform publishing and social OAuth are intentionally deferred. The current product exposes export presets for landscape, vertical, and square output; submits versioned video documents to a private render-worker boundary; records completed worker-returned video files as tenant-scoped video assets; and generates signed download URLs only after access checks. A render worker must return a `storageKey` in its JSON response for an export to become downloadable.
+
+For immediate use without credentials or a worker, the Scene Editor also provides **Download quick draft**. It renders the saved scene manifest locally in the browser and downloads a short, caption-style WebM file. This fallback is intentionally labelled as a draft: it contains rendered scene cards and text, does not claim to produce a final MP4, and does not upload any video to the server. The worker path remains the production route for final MP4 assets.
 
 ## Next Engineering Steps
 
