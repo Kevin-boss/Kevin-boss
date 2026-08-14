@@ -91,3 +91,4 @@ The remaining unchecked items represent work that is not yet complete or require
 - [x] Add fallback-export tests and UI verification for no-configuration downloads.
 - [x] Exercise the browser recording and anchor-download path for the quick-draft export with controlled test doubles.
 - [x] Fix the Media Library mobile layout overflow observed during responsive verification.
+- [x] Add the missing React key to rendered Jobs workspace rows identified during interaction testing.
