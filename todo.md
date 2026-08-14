@@ -10,7 +10,7 @@
 - [x] Implement TTS voice-catalog filters, transcription records, word-level timing, and SRT/VTT caption artifacts.
 - [x] Implement durable asynchronous job records with progress, retries, cancellation, errors, and job-event activity history.
 - [x] Implement the video render manifest, export presets, render quality checks, and output-download metadata.
-- [ ] Implement social account, post, schedule, and integration-status models using official API adapter boundaries.
+- [x] Implement social account, post, schedule, and integration-status models using official API adapter boundaries.
 - [x] Implement AI Copilot command parsing into auditable executable tool actions with approval-aware state changes.
 - [x] Implement usage, plan, notification, audit-log, and admin-system-health foundations.
 - [x] Create a premium, responsive application shell with workspace switcher, command launcher, theme support, and accessible navigation.
@@ -21,7 +21,7 @@
 - [x] Build the timeline editor foundation with video, audio, caption, overlay, and scene tracks plus property editing.
 - [x] Build the Voice and Caption workspace with voice filtering, transcript review, caption styling, and subtitle export controls.
 - [ ] Build the content calendar, social account manager, publishing review, and platform-specific adaptation workspace.
-- [ ] Build the analytics, agency/client, approvals, and admin workspace foundations.
+- [x] Build the analytics, agency/client, approvals, and admin workspace foundations.
 - [x] Add database migrations and apply the schema changes.
 - [x] Add automated workflow coverage for authorization, AI task validation, structured scripts, job transitions, Copilot tools, and rights checks.
 - [x] Add a dedicated rights-enforcement test beyond asset metadata normalization and map each workflow test category to its test module.
