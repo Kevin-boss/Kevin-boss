@@ -6,6 +6,7 @@ import { copilotRouter } from "./routers/copilot";
 import { productionRouter } from "./routers/production";
 import { projectRouter } from "./routers/projects";
 import { providerRouter } from "./routers/providers";
+import { operationsRouter } from "./routers/operations";
 import { workspaceRouter } from "./routers/workspace";
 
 export const appRouter = router({
@@ -26,6 +27,7 @@ export const appRouter = router({
   production: productionRouter,
   copilot: copilotRouter,
   providers: providerRouter,
+  operations: operationsRouter,
 });
 
 export type AppRouter = typeof appRouter;

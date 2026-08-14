@@ -6,20 +6,20 @@
 - [x] Implement the asset library data model with folders, tags, search metadata, derivatives, licensing, attribution, and rights status.
 - [ ] Implement provider registry and AI task contracts for LLM, TTS, transcription, image generation, and media generation fallbacks.
 - [x] Implement the AI Script Studio API with structured scene JSON, hook, visual prompt, B-roll, transition, SFX, and CTA output.
-- [ ] Implement the research workspace API with source records, claim classification, citations, and verified-versus-AI-generated visual status.
+- [x] Implement the research workspace API with source records, claim classification, citations, and verified-versus-AI-generated visual status.
 - [ ] Implement TTS voice-catalog filters, transcription records, word-level timing, and SRT/VTT caption artifacts.
 - [x] Implement durable asynchronous job records with progress, retries, cancellation, errors, and job-event activity history.
 - [ ] Implement the video render manifest, export presets, render quality checks, and output-download metadata.
 - [ ] Implement social account, post, schedule, and integration-status models using official API adapter boundaries.
 - [x] Implement AI Copilot command parsing into auditable executable tool actions with approval-aware state changes.
-- [ ] Implement usage, plan, notification, audit-log, and admin-system-health foundations.
+- [x] Implement usage, plan, notification, audit-log, and admin-system-health foundations.
 - [x] Create a premium, responsive application shell with workspace switcher, command launcher, theme support, and accessible navigation.
 - [x] Build the dashboard and project workspace with live job status, content pipeline stages, creation entry points, and progress states.
-- [ ] Build the Script Studio with structured scene editing, research citations, regeneration controls, and platform-copy panels.
+- [x] Build the Script Studio with structured scene editing, research citations, regeneration controls, and platform-copy panels.
 - [x] Build the research workspace with clear verified, user-provided, and AI-generated information distinctions.
-- [ ] Build the media asset library with search, filter, licensing, rights, and upload-ready empty states.
-- [ ] Build the timeline editor foundation with video, audio, caption, overlay, and scene tracks plus property editing.
-- [ ] Build the Voice and Caption workspace with voice filtering, transcript review, caption styling, and subtitle export controls.
+- [x] Build the media asset library with search, filter, licensing, rights, and upload-ready empty states.
+- [x] Build the timeline editor foundation with video, audio, caption, overlay, and scene tracks plus property editing.
+- [x] Build the Voice and Caption workspace with voice filtering, transcript review, caption styling, and subtitle export controls.
 - [ ] Build the content calendar, social account manager, publishing review, and platform-specific adaptation workspace.
 - [ ] Build the analytics, agency/client, approvals, and admin workspace foundations.
 - [x] Add database migrations and apply the schema changes.
@@ -28,9 +28,9 @@
 - [ ] Add explicit research citation records and source-grounded summaries to the research API and workspace.
 - [ ] Implement actual TTS generation and apply all catalog filters for gender, tone, accent, speed, and emotion.
 - [ ] Build official social-account, post, and scheduled-publishing procedures with provider adapters and approval gates. (Deferred by user; not part of current delivery scope.)
-- [ ] Add plan, usage, notifications, and administrative health procedures and supporting UI.
-- [ ] Add scene editing, scene-level regeneration, research citations, and platform-copy panels to Script Studio.
-- [ ] Add folder/tag and licensing editing controls to the asset library.
+- [x] Add plan, usage, notifications, and administrative health procedures and supporting UI.
+- [x] Add scene editing, scene-level regeneration, research citations, and platform-copy panels to Script Studio.
+- [x] Add folder/tag and licensing editing controls to the asset library.
 - [x] Persist editable timeline tracks and scene properties instead of read-only timeline visualization.
 - [x] Add caption-style controls and complete voice filter interaction in the Voice & Caption workspace.
 - [ ] Add API, integration, and UI flow tests for the implemented production workflows.
@@ -46,7 +46,7 @@
 - [x] Add explicit research citation records, source-grounded summaries, and Research workspace display.
 - [x] Add persistent editor track/property mutations and caption styling controls.
 - [x] Add provider-backed TTS boundary and complete voice catalog filtering.
-- [ ] Add approval, notification, usage, and admin-health workflows.
+- [x] Add approval, notification, usage, and admin-health workflows.
 - [x] Add editable persisted track operations in the Timeline Editor.
 - [x] Implement a private render-worker endpoint boundary with tracked render jobs and safe unavailable states.
 - [ ] Add broad API and UI integration tests for completed production workflows.
@@ -77,3 +77,8 @@ The remaining unchecked items represent work that is not yet complete or require
 - [x] Test export submission, unavailable-worker states, and signed download access.
 - [x] Add completed-export download cards or links to the Jobs workspace.
 - [x] Add verification coverage for export submission, worker-unavailable state, and signed-download access from Editor and Jobs.
+- [x] Add research citation context to Script Studio scenes and expose source provenance alongside script claims.
+- [x] Add scene-level regeneration controls with auditable jobs and approval-aware replacement behavior.
+- [x] Attach citation IDs or provenance records to specific script scenes or claims.
+- [x] Stage regenerated scene variants for approval before replacing the active scene.
+- [ ] Add targeted Script Studio tests for scene editing, citation mapping, and regeneration approval.

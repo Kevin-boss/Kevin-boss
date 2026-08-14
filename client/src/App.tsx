@@ -14,6 +14,7 @@ import TimelineEditor from "./pages/TimelineEditor";
 import VoiceCaptions from "./pages/VoiceCaptions";
 import Jobs from "./pages/Jobs";
 import Workspace from "./pages/Workspace";
+import Operations from "./pages/Operations";
 import FoundationPage from "./pages/FoundationPage";
 import Publishing from "./pages/Publishing";
 import ProviderRegistry from "./pages/ProviderRegistry";
@@ -30,7 +31,8 @@ function Router() {
       <Route path={"/voice"} component={VoiceCaptions} />
       <Route path={"/jobs"} component={Jobs} />
       <Route path={"/copilot"} component={Copilot} />
-      <Route path={"/workspace"} component={Workspace} />
+      <Route path="/workspace" component={Workspace} />
+      <Route path="/operations" component={Operations} />
       <Route path={"/publish"} component={Publishing} />
       <Route path={"/analytics"}><FoundationPage eyebrow="Intelligence" title="Analytics workspace" description="Performance records are designed to ingest only official platform data. Connect approved accounts to begin synchronizing verified views, watch time, engagement, and publication state." /></Route>
       <Route path={"/settings"} component={ProviderRegistry} />

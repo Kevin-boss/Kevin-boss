@@ -1,0 +1,1 @@
+ALTER TABLE `tracks` MODIFY COLUMN `type` enum('video','scene','audio','broll','voice','music','sfx','captions','overlay') NOT NULL;

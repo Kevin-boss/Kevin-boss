@@ -21,7 +21,7 @@ const menuItems = [
   { icon: CalendarDays, label: "Publishing", path: "/publish" },
   { icon: BarChart3, label: "Analytics", path: "/analytics" },
 ];
-const teamItems = [{ icon: UsersRound, label: "Agency & clients", path: "/workspace" }, { icon: Bot, label: "AI Copilot", path: "/copilot" }];
+const teamItems = [{ icon: UsersRound, label: "Agency & clients", path: "/workspace" }, { icon: Bot, label: "AI Copilot", path: "/copilot" }, { icon: Settings2, label: "Operations", path: "/operations" }];
 const SIDEBAR_WIDTH_KEY = "content-os.sidebar-width";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
