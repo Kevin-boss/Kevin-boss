@@ -48,15 +48,32 @@ export async function executeRegistryAsr(provider: RegistryProvider, payload: Re
  * before the modality-specific executor is called, with an explicit built-in
  * fallback when no registry provider is configured.
  */
+const providerExecutorBrand = Symbol("providerExecutor");
+type BrandedProviderExecutor<TPayload, TResult> = ((providers: unknown[], payload: TPayload) => Promise<TResult>) & { readonly [providerExecutorBrand]: true; readonly capability: string };
+
 export function createProviderExecutor<TPayload, TResult>(config: {
   capability: string;
   executeRegistry: (provider: RegistryProvider, payload: TPayload) => Promise<TResult>;
   executeBuiltIn: (payload: TPayload) => Promise<TResult>;
-}) {
-  return async (providers: unknown[], payload: TPayload) => {
+}): BrandedProviderExecutor<TPayload, TResult> {
+  const executor = (async (providers: unknown[], payload: TPayload) => {
     const candidates = providers.filter((row): row is RegistryProvider => !!row && typeof row === "object" && typeof (row as RegistryProvider).endpoint === "string" && typeof (row as RegistryProvider).modelId === "string");
     const selection = selectPreferredProvider(candidates, config.capability);
     if (selection.mode === "registry" && selection.provider) return config.executeRegistry(selection.provider, payload);
     return config.executeBuiltIn(payload);
-  };
+  }) as BrandedProviderExecutor<TPayload, TResult>;
+  Object.defineProperties(executor, { [providerExecutorBrand]: { value: true }, capability: { value: config.capability } });
+  return executor;
+}
+
+const registeredProviderAdapters = new Map<string, BrandedProviderExecutor<unknown, unknown>>();
+
+export function registerProviderAdapter<TPayload, TResult>(name: string, executor: BrandedProviderExecutor<TPayload, TResult>) {
+  if (registeredProviderAdapters.has(name)) throw new Error(`Provider adapter ${name} is already registered.`);
+  registeredProviderAdapters.set(name, executor as BrandedProviderExecutor<unknown, unknown>);
+  return executor;
+}
+
+export function getProviderAdapter(name: string) {
+  return registeredProviderAdapters.get(name);
 }

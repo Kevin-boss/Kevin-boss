@@ -7,7 +7,7 @@ import { generateImage } from "../_core/imageGeneration";
 import { invokeLLM } from "../_core/llm";
 import { transcribeAudio } from "../_core/voiceTranscription";
 import { assertBuiltInOrFreeFirst, assertFreeFirstSelection } from "../providerPolicy";
-import { executeRegistryAsr, executeRegistryImage, executeRegistryText, selectPreferredProvider, type RegistryProvider } from "../providerAdapter";
+import { createProviderExecutor, executeRegistryAsr, executeRegistryImage, executeRegistryText, selectPreferredProvider, type RegistryProvider } from "../providerAdapter";
 import { normalizeAssetMetadata } from "../assetMetadata";
 import { buildRenderManifestPayload, getRenderManifest, validateRenderResponse } from "../renderPolicy";
 import { attachSceneCitationIds, reviewSceneVariant as reviewScriptSceneVariant, stageSceneVariant, updateSceneFields } from "../scriptPolicy";
@@ -23,26 +23,13 @@ function registryRows(rows: unknown[]): RegistryProvider[] {
   return rows.filter((row): row is RegistryProvider => !!row && typeof row === "object" && typeof (row as RegistryProvider).endpoint === "string" && typeof (row as RegistryProvider).modelId === "string");
 }
 
-async function invokeLLMWithProvider(rows: unknown[], request: Parameters<typeof invokeLLM>[0]) {
-  const selection = selectPreferredProvider(registryRows(rows), "text");
-  if (selection.mode === "registry" && selection.provider) {
-    const content = await executeRegistryText(selection.provider, request as Record<string, unknown>);
-    return { choices: [{ message: { content } }] };
-  }
-  return invokeLLM(request);
-}
+const textProviderExecutor = createProviderExecutor<Parameters<typeof invokeLLM>[0], Awaited<ReturnType<typeof invokeLLM>>>({ capability: "text", executeRegistry: async (provider, request) => ({ choices: [{ message: { content: await executeRegistryText(provider, request as Record<string, unknown>) } }] }) as Awaited<ReturnType<typeof invokeLLM>>, executeBuiltIn: invokeLLM });
+const imageProviderExecutor = createProviderExecutor<Record<string, unknown>, Awaited<ReturnType<typeof generateImage>>>({ capability: "image", executeRegistry: async (provider, request) => ({ url: await executeRegistryImage(provider, request) }), executeBuiltIn: request => generateImage(request as Parameters<typeof generateImage>[0]) });
+const asrProviderExecutor = createProviderExecutor<Record<string, unknown>, Awaited<ReturnType<typeof transcribeAudio>>>({ capability: "asr", executeRegistry: async (provider, request) => await executeRegistryAsr(provider, request) as Awaited<ReturnType<typeof transcribeAudio>>, executeBuiltIn: request => transcribeAudio(request as Parameters<typeof transcribeAudio>[0]) });
 
-async function generateImageWithProvider(rows: unknown[], request: Record<string, unknown>) {
-  const selection = selectPreferredProvider(registryRows(rows), "image");
-  if (selection.mode === "registry" && selection.provider) return { url: await executeRegistryImage(selection.provider, request) };
-  return generateImage(request as Parameters<typeof generateImage>[0]);
-}
-
-async function transcribeAudioWithProvider(rows: unknown[], request: Record<string, unknown>) {
-  const selection = selectPreferredProvider(registryRows(rows), "asr");
-  if (selection.mode === "registry" && selection.provider) return executeRegistryAsr(selection.provider, request);
-  return transcribeAudio(request as Parameters<typeof transcribeAudio>[0]);
-}
+function invokeLLMWithProvider(rows: unknown[], request: Parameters<typeof invokeLLM>[0]) { return textProviderExecutor(rows, request); }
+function generateImageWithProvider(rows: unknown[], request: Record<string, unknown>) { return imageProviderExecutor(rows, request); }
+function transcribeAudioWithProvider(rows: unknown[], request: Record<string, unknown>) { return asrProviderExecutor(rows, request); }
 
 function srtTime(seconds: number) {
   const total = Math.max(0, Math.floor(seconds * 1000));

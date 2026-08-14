@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { createProviderExecutor, executeRegistryAsr, executeRegistryImage, executeRegistryText } from "./providerAdapter";
+import { createProviderExecutor, executeRegistryAsr, executeRegistryImage, executeRegistryText, getProviderAdapter, registerProviderAdapter } from "./providerAdapter";
 
 const provider = { id: 1, provider: "local", endpoint: "https://local.test/v1", modelId: "free-model", costTier: "free" as const, selfHosted: "yes" as const, commercialUse: "allowed" as const, enabled: "yes" as const, capabilities: ["text", "image", "asr", "future"] };
 
@@ -27,5 +27,12 @@ describe("registry provider adapter", () => {
     await expect(execute([], { value: 2 })).resolves.toBe("built-in");
     expect(executeRegistry).toHaveBeenCalledOnce();
     expect(executeBuiltIn).toHaveBeenCalledOnce();
+  });
+
+  it("only registers branded factory executors and rejects duplicate adapter names", () => {
+    const executor = createProviderExecutor({ capability: "registered_future", executeRegistry: async () => "registry", executeBuiltIn: async () => "built-in" });
+    registerProviderAdapter("registered_future", executor);
+    expect(getProviderAdapter("registered_future")).toBe(executor);
+    expect(() => registerProviderAdapter("registered_future", executor)).toThrow(/already registered/i);
   });
 });

@@ -83,4 +83,4 @@ The remaining unchecked items represent work that is not yet complete or require
 - [x] Stage regenerated scene variants for approval before replacing the active scene.
 - [x] Add targeted Script Studio tests for scene editing, citation mapping, and regeneration approval.
 - [ ] Add procedure-level tests for provider selection and free-first blocking in text, image, ASR, TTS, and render paths.
-- [ ] Add a shared adapter factory and registration contract that makes free-first enforcement mandatory for future capability adapters.
+- [ ] Add a branded shared adapter factory and registration boundary that makes free-first enforcement mandatory for future capability adapters.
