@@ -16,3 +16,7 @@ The application uses the following free-first rule: register self-hosted endpoin
 
 [1]: https://github.com/rhasspy/piper "rhasspy/piper — Fast, local neural text to speech system"
 [2]: https://huggingface.co/coqui/XTTS-v2/blob/main/LICENSE.txt "XTTS-v2 model license"
+
+## Runtime enforcement contract
+
+Every registry-driven execution path must load enabled model-provider rows and call the shared `assertBuiltInOrFreeFirst(providers, capability)` gate before creating a job or invoking a provider. When no eligible registry row exists, the current managed built-in service is permitted as a fallback. When eligible rows exist, the preferred free or self-hosted commercially allowed provider is selected; a paid-only configuration is rejected rather than silently used. New adapters must use this gate and add a capability-specific procedure test before being enabled.

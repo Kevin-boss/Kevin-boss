@@ -23,3 +23,12 @@ export function assertFreeFirstSelection<T extends ProviderPolicyCandidate>(sele
   if (preferred && preferred.costTier === "free" && selected.costTier !== "free") throw new TRPCError({ code: "BAD_REQUEST", message: `A free approved ${capability} provider is available. Select it before using a paid or metered provider.` });
   return selected;
 }
+
+export function assertBuiltInOrFreeFirst<T extends ProviderPolicyCandidate>(providers: T[], capability: string) {
+  const eligible = providers.filter(provider => supportsCapability(provider, capability));
+  if (!eligible.length) return { mode: "built_in" as const, provider: undefined };
+  const preferred = rankFreeFirst(eligible, capability)[0];
+  if (!preferred) throw new TRPCError({ code: "BAD_REQUEST", message: `No commercially approved provider is available for ${capability}.` });
+  if (preferred.costTier !== "free" && preferred.selfHosted !== "yes") throw new TRPCError({ code: "BAD_REQUEST", message: `A free or self-hosted ${capability} provider must be configured before paid execution.` });
+  return { mode: "registry" as const, provider: preferred };
+}

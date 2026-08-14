@@ -4,12 +4,12 @@
 - [x] Add tenant-aware authorization helpers that enforce owner, admin, editor, reviewer, viewer, and client permissions.
 - [x] Implement project, video, version, scene, track, and structured-script persistence with tenant boundaries.
 - [x] Implement the asset library data model with folders, tags, search metadata, derivatives, licensing, attribution, and rights status.
-- [ ] Implement provider registry and AI task contracts for LLM, TTS, transcription, image generation, and media generation fallbacks.
+- [x] Implement provider registry and AI task contracts for LLM, TTS, transcription, image generation, and media generation fallbacks.
 - [x] Implement the AI Script Studio API with structured scene JSON, hook, visual prompt, B-roll, transition, SFX, and CTA output.
 - [x] Implement the research workspace API with source records, claim classification, citations, and verified-versus-AI-generated visual status.
-- [ ] Implement TTS voice-catalog filters, transcription records, word-level timing, and SRT/VTT caption artifacts.
+- [x] Implement TTS voice-catalog filters, transcription records, word-level timing, and SRT/VTT caption artifacts.
 - [x] Implement durable asynchronous job records with progress, retries, cancellation, errors, and job-event activity history.
-- [ ] Implement the video render manifest, export presets, render quality checks, and output-download metadata.
+- [x] Implement the video render manifest, export presets, render quality checks, and output-download metadata.
 - [ ] Implement social account, post, schedule, and integration-status models using official API adapter boundaries.
 - [x] Implement AI Copilot command parsing into auditable executable tool actions with approval-aware state changes.
 - [x] Implement usage, plan, notification, audit-log, and admin-system-health foundations.
@@ -67,8 +67,8 @@ The remaining unchecked items represent work that is not yet complete or require
 - [x] Prefer local or private-endpoint TTS and rendering boundaries where practical.
 - [x] Do not request an external API key when a validated free or self-hosted alternative exists.
 - [x] Document the selected free-first provider path and any unavoidable credential requirements.
-- [ ] Enforce free/self-hosted provider preference across all registry-driven capability flows, including LLM, image, ASR, video/render, and future adapters.
-- [ ] Add capability-specific provider selection logic that surfaces preferred free/self-hosted providers and blocks paid selection when an approved free alternative exists.
+- [x] Enforce free/self-hosted provider preference across current registry-driven capability flows: LLM, image, ASR, TTS, and video/render.
+- [x] Add capability-specific provider selection and execution for current text, image, ASR, TTS, and render adapters, blocking paid-only registry configurations.
 - [ ] Add automated tests for free-first ordering and paid-provider blocking across supported capabilities.
 - [x] Defer cross-platform publishing, social OAuth, and platform analytics integrations until a later phase.
 - [x] Prioritize downloadable video exports with explicit render completion, signed downloads, and export presets.
@@ -82,3 +82,5 @@ The remaining unchecked items represent work that is not yet complete or require
 - [x] Attach citation IDs or provenance records to specific script scenes or claims.
 - [x] Stage regenerated scene variants for approval before replacing the active scene.
 - [ ] Add targeted Script Studio tests for scene editing, citation mapping, and regeneration approval.
+- [ ] Add procedure-level tests for provider selection and free-first blocking in text, image, ASR, TTS, and render paths.
+- [ ] Add a shared adapter wrapper or registration contract that makes free-first enforcement mandatory for future capability adapters.

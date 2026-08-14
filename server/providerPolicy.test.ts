@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertFreeFirstSelection, rankFreeFirst } from "./providerPolicy";
+import { assertBuiltInOrFreeFirst, assertFreeFirstSelection, rankFreeFirst } from "./providerPolicy";
 
 const providers = [
   { id: 1, costTier: "paid" as const, selfHosted: "no" as const, commercialUse: "allowed" as const, enabled: "yes" as const, capabilities: ["tts", "text"] },
@@ -18,5 +18,13 @@ describe("free-first provider policy", () => {
 
   it("blocks paid selection when an approved free alternative exists", () => {
     expect(() => assertFreeFirstSelection(providers[0], providers, "tts")).toThrow(/free approved tts provider/i);
+  });
+
+  it("allows built-in fallback only when no eligible registry provider exists", () => {
+    for (const capability of ["text", "image", "video", "tts", "asr", "embedding", "vision"] as const) {
+      expect(assertBuiltInOrFreeFirst([], capability).mode).toBe("built_in");
+    }
+    expect(assertBuiltInOrFreeFirst(providers, "tts").mode).toBe("registry");
+    expect(() => assertBuiltInOrFreeFirst([{ ...providers[0], capabilities: ["video"] }], "video")).toThrow(/free or self-hosted/i);
   });
 });
