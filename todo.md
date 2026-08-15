@@ -149,3 +149,4 @@ The user-directed delivery path remains **credential-free draft download**. Publ
 - [x] Code-split noncritical authenticated workspace routes while keeping the public guest quick-draft route immediately available.
 - [x] Split stable third-party client dependencies into cacheable production chunks to reduce the initial entry bundle warning.
 - [x] Add a role-gated social-account disconnection action that revokes the server-side credential reference and invalidates linked scheduled plans without calling an external provider.
+- [x] Add an accessible Publishing workspace control for disconnecting a currently connected account and refreshing readiness state.

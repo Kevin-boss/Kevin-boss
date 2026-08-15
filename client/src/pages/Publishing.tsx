@@ -2,11 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { PageHeader } from "@/components/PageHeader";
 import { ProjectPicker } from "@/components/ProjectPicker";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { trpc } from "@/lib/trpc";
-import { CalendarDays, CalendarClock, CheckCircle2, ChevronLeft, ChevronRight, CircleAlert, FilePenLine, LayoutList, Loader2, Send, ShieldCheck, Sparkles } from "lucide-react";
+import { CalendarDays, CalendarClock, CheckCircle2, ChevronLeft, ChevronRight, CircleAlert, FilePenLine, LayoutList, Loader2, Send, ShieldCheck, Sparkles, Unplug } from "lucide-react";
 import React, { FormEvent, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -31,6 +32,7 @@ export default function Publishing() {
   const accounts = trpc.production.social.listAccounts.useQuery({ workspaceId: activeWorkspaceId ?? 0 }, { enabled: Boolean(activeWorkspaceId) });
   const create = trpc.production.social.createPost.useMutation();
   const adapt = trpc.production.script.generatePlatformCopy.useMutation();
+  const disconnect = trpc.production.social.disconnectAccount.useMutation();
 
   const scheduledPosts = useMemo(() => (posts.data ?? []).filter(post => post.scheduledFor).sort((a, b) => new Date(a.scheduledFor!).getTime() - new Date(b.scheduledFor!).getTime()), [posts.data]);
   const monthLabel = calendarCursor.toLocaleDateString(undefined, { month: "long", year: "numeric" });
@@ -60,6 +62,17 @@ export default function Publishing() {
       toast.success(`${platformLabels[platform]} adaptation generated for review.`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not generate platform copy.");
+    }
+  };
+
+  const disconnectAccount = async (accountId: number, accountName: string) => {
+    if (!activeWorkspaceId) return;
+    try {
+      await disconnect.mutateAsync({ workspaceId: activeWorkspaceId, accountId });
+      await Promise.all([accounts.refetch(), posts.refetch()]);
+      toast.success(`${accountName} disconnected. Linked plans now require reassignment and approval.`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not disconnect the social account.");
     }
   };
 
@@ -98,7 +111,7 @@ export default function Publishing() {
         </section>
 
         <section className="grid gap-6 lg:grid-cols-2">
-          <Card className="border-white/7 bg-white/[.025] shadow-none"><CardContent className="p-0"><div className="flex items-center justify-between border-b border-white/7 p-5"><div><h2 className="font-medium text-white">Connection readiness</h2><p className="mt-1 text-xs text-slate-500">Only connected official accounts can enter dispatch after approval.</p></div><span className="rounded-full bg-slate-300/8 px-2.5 py-1 text-[10px] text-slate-400">{accounts.data?.filter(account => account.connectionStatus === "connected").length ?? 0} connected</span></div>{accounts.data?.length ? <div className="divide-y divide-white/6">{accounts.data.map(account => <div className="flex items-center gap-3 p-5" key={account.id}><div className="grid h-9 w-9 place-items-center rounded-xl bg-violet-400/12"><Send className="h-4 w-4 text-violet-200" /></div><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium capitalize text-slate-200">{account.accountName}</p><p className="mt-0.5 text-xs capitalize text-slate-500">{account.platform} · {account.connectionStatus.replace(/_/g, " ")}</p></div>{account.connectionStatus === "connected" ? <CheckCircle2 className="h-4 w-4 text-emerald-300" /> : <CircleAlert className="h-4 w-4 text-amber-100" />}</div>)}</div> : <div className="grid min-h-40 place-items-center text-center"><div><CircleAlert className="mx-auto h-5 w-5 text-slate-600" /><p className="mt-3 text-sm text-slate-500">No official accounts are connected.</p><p className="mt-1 text-xs text-slate-600">You can still prepare and review plans safely. Credentials are requested only when you choose to activate publishing for selected platforms.</p></div></div>}</CardContent></Card>
+          <Card className="border-white/7 bg-white/[.025] shadow-none"><CardContent className="p-0"><div className="flex items-center justify-between border-b border-white/7 p-5"><div><h2 className="font-medium text-white">Connection readiness</h2><p className="mt-1 text-xs text-slate-500">Only connected official accounts can enter dispatch after approval.</p></div><span className="rounded-full bg-slate-300/8 px-2.5 py-1 text-[10px] text-slate-400">{accounts.data?.filter(account => account.connectionStatus === "connected").length ?? 0} connected</span></div>{accounts.data?.length ? <div className="divide-y divide-white/6">{accounts.data.map(account => <div className="flex items-center gap-3 p-5" key={account.id}><div className="grid h-9 w-9 place-items-center rounded-xl bg-violet-400/12"><Send className="h-4 w-4 text-violet-200" /></div><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium capitalize text-slate-200">{account.accountName}</p><p className="mt-0.5 text-xs capitalize text-slate-500">{account.platform} · {account.connectionStatus.replace(/_/g, " ")}</p></div><div className="flex items-center gap-2">{account.connectionStatus === "connected" ? <><CheckCircle2 className="h-4 w-4 text-emerald-300" /><AlertDialog><AlertDialogTrigger asChild><Button type="button" size="sm" variant="outline" disabled={disconnect.isPending} className="border-amber-200/20 text-amber-100 hover:bg-amber-300/10"><Unplug className="mr-1.5 h-3.5 w-3.5" />Disconnect</Button></AlertDialogTrigger><AlertDialogContent className="border-white/10 bg-slate-950 text-slate-100"><AlertDialogHeader><AlertDialogTitle>Disconnect {account.accountName}?</AlertDialogTitle><AlertDialogDescription>Its credential reference will be removed locally. Any linked scheduled plans will require a new connected account and approval before they can dispatch.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={disconnect.isPending}>Keep connected</AlertDialogCancel><AlertDialogAction disabled={disconnect.isPending} onClick={() => disconnectAccount(account.id, account.accountName)} className="bg-amber-300 text-slate-950 hover:bg-amber-200">{disconnect.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Unplug className="mr-2 h-4 w-4" />}Disconnect account</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></> : <CircleAlert className="h-4 w-4 text-amber-100" />}</div></div>)}</div> : <div className="grid min-h-40 place-items-center text-center"><div><CircleAlert className="mx-auto h-5 w-5 text-slate-600" /><p className="mt-3 text-sm text-slate-500">No official accounts are connected.</p><p className="mt-1 text-xs text-slate-600">You can still prepare and review plans safely. Credentials are requested only when you choose to activate publishing for selected platforms.</p></div></div>}</CardContent></Card>
           <Card className="border-white/7 bg-white/[.025] shadow-none"><CardContent className="p-0"><div className="flex items-center justify-between border-b border-white/7 p-5"><div><h2 className="font-medium text-white">Review queue</h2><p className="mt-1 text-xs text-slate-500">Plans remain transparent about approval and connection prerequisites.</p></div><ShieldCheck className="h-5 w-5 text-amber-100" /></div><div className="divide-y divide-white/6">{posts.data?.length ? posts.data.slice(0, 6).map(post => <PlanRow post={post} key={post.id} />) : <div className="grid min-h-40 place-items-center text-center"><div><ShieldCheck className="mx-auto h-5 w-5 text-slate-600" /><p className="mt-3 text-sm text-slate-500">No plans are awaiting review.</p></div></div>}</div></CardContent></Card>
         </section>
       </div>

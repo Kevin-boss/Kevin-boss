@@ -4,12 +4,12 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  posts: { data: [] as any[], refetch: vi.fn() }, accounts: { data: [] }, create: { mutateAsync: vi.fn(), isPending: false }, adapt: { mutateAsync: vi.fn(), isPending: false },
+  posts: { data: [] as any[], refetch: vi.fn() }, accounts: { data: [] as any[], refetch: vi.fn() }, create: { mutateAsync: vi.fn(), isPending: false }, adapt: { mutateAsync: vi.fn(), isPending: false }, disconnect: { mutateAsync: vi.fn(), isPending: false },
 }));
 vi.mock("@/hooks/useWorkspace", () => ({ useWorkspace: () => ({ activeWorkspaceId: 3 }) }));
 vi.mock("@/components/ProjectPicker", () => ({ ProjectPicker: ({ onChange }: { onChange: (projectId: number) => void }) => <button type="button" onClick={() => onChange(9)}>Select test project</button> }));
 vi.mock("@/components/PageHeader", () => ({ PageHeader: ({ title }: { title: string }) => <h1>{title}</h1> }));
-vi.mock("@/lib/trpc", () => ({ trpc: { production: { script: { generatePlatformCopy: { useMutation: () => mocks.adapt } }, social: { listPosts: { useQuery: () => mocks.posts }, listAccounts: { useQuery: () => mocks.accounts }, createPost: { useMutation: () => mocks.create } } } } }));
+vi.mock("@/lib/trpc", () => ({ trpc: { production: { script: { generatePlatformCopy: { useMutation: () => mocks.adapt } }, social: { listPosts: { useQuery: () => mocks.posts }, listAccounts: { useQuery: () => mocks.accounts }, createPost: { useMutation: () => mocks.create }, disconnectAccount: { useMutation: () => mocks.disconnect } } } } }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 import Publishing from "./Publishing";
@@ -18,7 +18,7 @@ import { toast } from "sonner";
 describe("Publishing", () => {
   let root: Root | undefined;
   let container: HTMLDivElement | undefined;
-  afterEach(async () => { await act(async () => root?.unmount()); container?.remove(); root = undefined; container = undefined; vi.clearAllMocks(); mocks.create.isPending = false; mocks.adapt.isPending = false; mocks.posts.data = []; mocks.accounts.data = []; });
+  afterEach(async () => { await act(async () => root?.unmount()); container?.remove(); root = undefined; container = undefined; vi.clearAllMocks(); mocks.create.isPending = false; mocks.adapt.isPending = false; mocks.disconnect.isPending = false; mocks.posts.data = []; mocks.accounts.data = []; });
 
   it("creates an approval-required scheduled plan without a connected account", async () => {
     vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
@@ -63,5 +63,20 @@ describe("Publishing", () => {
     await act(async () => Array.from(container!.querySelectorAll("button")).find(button => button.textContent?.includes("Agenda"))?.click());
     expect(container.textContent).toContain("Reviewed release");
     expect(container.textContent).toContain("LinkedIn");
+  });
+
+  it("confirms a local account disconnect and refreshes readiness state", async () => {
+    vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+    mocks.accounts.data = [{ id: 8, accountName: "Studio Channel", platform: "youtube", connectionStatus: "connected" }];
+    mocks.disconnect.mutateAsync.mockResolvedValue({ accountId: 8, connectionStatus: "not_connected", linkedPlansInvalidated: true });
+    container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container);
+    await act(async () => root?.render(<Publishing />));
+    await act(async () => Array.from(container!.querySelectorAll("button")).find(button => button.textContent?.includes("Disconnect"))?.click());
+    expect(document.body.textContent).toContain("Disconnect Studio Channel?");
+    await act(async () => { Array.from(document.querySelectorAll("button")).find(button => button.textContent?.includes("Disconnect account"))?.click(); await Promise.resolve(); });
+    expect(mocks.disconnect.mutateAsync).toHaveBeenCalledWith({ workspaceId: 3, accountId: 8 });
+    expect(mocks.accounts.refetch).toHaveBeenCalled();
+    expect(mocks.posts.refetch).toHaveBeenCalled();
+    expect(toast.success).toHaveBeenCalledWith("Studio Channel disconnected. Linked plans now require reassignment and approval.");
   });
 });
