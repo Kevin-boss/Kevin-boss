@@ -144,4 +144,4 @@ The user-directed delivery path remains **credential-free draft download**. Publ
 - [x] Add an integrated Scene Editor regression that uses the real QuickDraftExportButton after the generated-project handoff rather than mocking the preview component.
 - [x] Audit and improve production-quality video controls, natural-voice selection, and provenance while preserving the credential-free browser-draft fallback. Production MP4 now carries an explicit standard or high-fidelity worker manifest; Voice & Captions labels public model-default fallback versus private neural quality and retains consent-controlled delivery controls.
 - [x] Add regression coverage proving the quality tier, natural-voice boundary, and private-worker activation requirements are communicated and enforced correctly.
-- [ ] Push the latest validated AI Content OS project state to the connected GitHub repository.
+- [x] Push the latest validated AI Content OS project state to the connected GitHub repository.
