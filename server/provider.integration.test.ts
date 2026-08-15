@@ -6,7 +6,7 @@ import { appRouter } from "./routers";
 import { getDb } from "./db";
 import { createJob, recordAudit, requireProjectAccess, requireWorkspaceAccess, updateJob } from "./platform";
 import { storagePut } from "./storage";
-import { voiceConsents, voices } from "../drizzle/schema";
+import { scheduledPosts, socialAccounts, socialPublishAttempts, voiceConsents, voices } from "../drizzle/schema";
 
 vi.mock("./db", () => ({ getDb: vi.fn() }));
 vi.mock("./platform", async importOriginal => {
@@ -195,5 +195,26 @@ describe("provider-backed production procedures", () => {
     expect(readiness.map(item => item.platform)).toEqual(["youtube", "tiktok", "facebook", "instagram", "linkedin", "x"]);
     expect(readiness.find(item => item.platform === "linkedin")).toMatchObject({ webhookSupported: false, webhookMode: "manual_refresh", publicationSupported: true });
     expect(JSON.stringify(readiness)).not.toContain(process.env.HF_TOKEN ?? "a-not-configured-token");
+  });
+
+  it("requeues an approved failed social dispatch with a unique retry key and audit record", async () => {
+    vi.clearAllMocks();
+    vi.mocked(requireProjectAccess).mockResolvedValue({ project: { id: 9, workspaceId: 3 } } as any);
+    vi.mocked(recordAudit).mockResolvedValue(undefined as any);
+    const post = { id: 81, projectId: 9, workspaceId: 3, platform: "youtube" as const, socialAccountId: 18, deliveryAssetId: 40, status: "scheduled" as const, approvedAt: new Date(), scheduleCronTaskUid: "task-1" };
+    const account = { id: 18, workspaceId: 3, platform: "youtube" as const, connectionStatus: "connected" as const };
+    const failedAttempt = { id: 44, scheduledPostId: 81, socialAccountId: 18, idempotencyKey: "social-81-18-task-1", status: "failed" as const, createdAt: new Date() };
+    const insertValues = vi.fn().mockResolvedValue([{ insertId: 99 }]);
+    vi.mocked(getDb).mockResolvedValue({
+      select: () => ({ from: (table: unknown) => ({ where: () => table === scheduledPosts ? queryRows([post]) : table === socialAccounts ? queryRows([account]) : table === socialPublishAttempts ? Object.assign(queryRows([failedAttempt]), { orderBy: () => queryRows([failedAttempt]) }) : queryRows([]) }) }),
+      insert: () => ({ values: insertValues }),
+      update: () => ({ set: () => ({ where: async () => [] }) }),
+    } as any);
+
+    const result = await appRouter.createCaller(ctx).production.social.retryDispatch({ postId: 81 });
+
+    expect(result).toEqual({ attemptId: 99, status: "queued", reused: false, priorAttemptId: 44 });
+    expect(insertValues).toHaveBeenCalledWith(expect.objectContaining({ scheduledPostId: 81, socialAccountId: 18, status: "queued", idempotencyKey: "social-81-18-task-1-retry-44" }));
+    expect(recordAudit).toHaveBeenCalledWith(expect.objectContaining({ action: "social.dispatch_retried", metadata: expect.objectContaining({ priorAttemptId: 44 }) }));
   });
 });

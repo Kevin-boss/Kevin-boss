@@ -26,6 +26,8 @@ describe("Publishing", () => {
     container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container);
     await act(async () => root?.render(<Publishing />));
     expect(container.textContent).toContain("No official accounts are connected.");
+    expect(container.textContent).toContain("Credentials on activation.");
+    expect(container.textContent).toContain("Credentials are requested only when you choose to activate publishing for selected platforms.");
     await act(async () => Array.from(container!.querySelectorAll("button")).find(button => button.textContent?.includes("Select test project"))?.click());
     const inputs = container.querySelectorAll("input");
     const inputSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
