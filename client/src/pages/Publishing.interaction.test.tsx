@@ -4,12 +4,12 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  posts: { data: [] as any[], refetch: vi.fn() }, accounts: { data: [] as any[], refetch: vi.fn() }, create: { mutateAsync: vi.fn(), isPending: false }, adapt: { mutateAsync: vi.fn(), isPending: false }, disconnect: { mutateAsync: vi.fn(), isPending: false }, assign: { mutateAsync: vi.fn(), isPending: false }, cancel: { mutateAsync: vi.fn(), isPending: false }, reschedule: { mutateAsync: vi.fn(), isPending: false },
+  posts: { data: [] as any[], refetch: vi.fn() }, accounts: { data: [] as any[], refetch: vi.fn() }, create: { mutateAsync: vi.fn(), isPending: false }, adapt: { mutateAsync: vi.fn(), isPending: false }, disconnect: { mutateAsync: vi.fn(), isPending: false }, assign: { mutateAsync: vi.fn(), isPending: false }, cancel: { mutateAsync: vi.fn(), isPending: false }, reschedule: { mutateAsync: vi.fn(), isPending: false }, retry: { mutateAsync: vi.fn(), isPending: false },
 }));
 vi.mock("@/hooks/useWorkspace", () => ({ useWorkspace: () => ({ activeWorkspaceId: 3 }) }));
 vi.mock("@/components/ProjectPicker", () => ({ ProjectPicker: ({ onChange }: { onChange: (projectId: number) => void }) => <button type="button" onClick={() => onChange(9)}>Select test project</button> }));
 vi.mock("@/components/PageHeader", () => ({ PageHeader: ({ title }: { title: string }) => <h1>{title}</h1> }));
-vi.mock("@/lib/trpc", () => ({ trpc: { production: { script: { generatePlatformCopy: { useMutation: () => mocks.adapt } }, social: { listPosts: { useQuery: () => mocks.posts }, listAccounts: { useQuery: () => mocks.accounts }, createPost: { useMutation: () => mocks.create }, disconnectAccount: { useMutation: () => mocks.disconnect }, assignAccount: { useMutation: () => mocks.assign }, cancelDispatch: { useMutation: () => mocks.cancel }, rescheduleDispatch: { useMutation: () => mocks.reschedule } } } } }));
+vi.mock("@/lib/trpc", () => ({ trpc: { production: { script: { generatePlatformCopy: { useMutation: () => mocks.adapt } }, social: { listPosts: { useQuery: () => mocks.posts }, listAccounts: { useQuery: () => mocks.accounts }, createPost: { useMutation: () => mocks.create }, disconnectAccount: { useMutation: () => mocks.disconnect }, assignAccount: { useMutation: () => mocks.assign }, cancelDispatch: { useMutation: () => mocks.cancel }, rescheduleDispatch: { useMutation: () => mocks.reschedule }, retryDispatch: { useMutation: () => mocks.retry } } } } }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 import Publishing from "./Publishing";
@@ -125,5 +125,17 @@ describe("Publishing", () => {
     expect((mocks.reschedule.mutateAsync.mock.calls[0]![0]!.scheduledFor as Date).getTime()).toBe(new Date("2026-08-21T10:15").getTime());
     expect(mocks.posts.refetch).toHaveBeenCalled();
     expect(toast.success).toHaveBeenCalledWith("Schedule updated. Approval and provider readiness remain enforced.");
+  });
+
+  it("queues an idempotent local retry for a failed plan without claiming publication success", async () => {
+    vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+    mocks.posts.data = [{ id: 17, title: "Retry release", copy: "A failed local attempt", platform: "youtube", status: "failed", scheduledFor: new Date("2026-08-20T09:30:00"), socialAccountId: 8 }];
+    mocks.retry.mutateAsync.mockResolvedValue({ attemptId: 77, status: "queued", reused: false, priorAttemptId: 66 });
+    container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container);
+    await act(async () => root?.render(<Publishing />));
+    await act(async () => { Array.from(container!.querySelectorAll("button")).find(button => button.textContent?.includes("Queue retry"))?.click(); await Promise.resolve(); });
+    expect(mocks.retry.mutateAsync).toHaveBeenCalledWith({ postId: 17 });
+    expect(mocks.posts.refetch).toHaveBeenCalled();
+    expect(toast.success).toHaveBeenCalledWith("Retry queued locally. External publication remains inactive until the platform is activated.");
   });
 });
