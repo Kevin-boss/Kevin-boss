@@ -152,4 +152,4 @@ The user-directed delivery path remains **credential-free draft download**. Publ
 - [x] Add an accessible Publishing workspace control for disconnecting a currently connected account and refreshing readiness state.
 - [x] Preserve published and cancelled social plan history when disconnecting an account, while invalidating only dispatchable plans.
 - [x] Add server-only validation and single-use consumption of social OAuth callback state without token exchange or browser exposure of the PKCE verifier.
-- [ ] Synchronize the subsequent validated autonomous hardening checkpoints to the connected GitHub repository.
+- [x] Synchronize the subsequent validated autonomous hardening checkpoints to the connected GitHub repository.
