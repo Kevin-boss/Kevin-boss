@@ -156,3 +156,4 @@ The user-directed delivery path remains **credential-free draft download**. Publ
 - [x] Add a Publishing review-queue control that assigns only a matching connected official account to a plan and refreshes its readiness state.
 - [x] Add a guarded cancellation action for unpublished social plans that removes an associated Heartbeat task by persisted task UID and preserves terminal history.
 - [x] Add a confirmed Publishing review-queue cancellation control for eligible local plans and refresh plan state after cancellation.
+- [x] Add a local rescheduling control for eligible publishing plans that preserves approval and uses the existing schedule lifecycle safely.

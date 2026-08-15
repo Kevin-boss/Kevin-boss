@@ -4,12 +4,12 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  posts: { data: [] as any[], refetch: vi.fn() }, accounts: { data: [] as any[], refetch: vi.fn() }, create: { mutateAsync: vi.fn(), isPending: false }, adapt: { mutateAsync: vi.fn(), isPending: false }, disconnect: { mutateAsync: vi.fn(), isPending: false }, assign: { mutateAsync: vi.fn(), isPending: false }, cancel: { mutateAsync: vi.fn(), isPending: false },
+  posts: { data: [] as any[], refetch: vi.fn() }, accounts: { data: [] as any[], refetch: vi.fn() }, create: { mutateAsync: vi.fn(), isPending: false }, adapt: { mutateAsync: vi.fn(), isPending: false }, disconnect: { mutateAsync: vi.fn(), isPending: false }, assign: { mutateAsync: vi.fn(), isPending: false }, cancel: { mutateAsync: vi.fn(), isPending: false }, reschedule: { mutateAsync: vi.fn(), isPending: false },
 }));
 vi.mock("@/hooks/useWorkspace", () => ({ useWorkspace: () => ({ activeWorkspaceId: 3 }) }));
 vi.mock("@/components/ProjectPicker", () => ({ ProjectPicker: ({ onChange }: { onChange: (projectId: number) => void }) => <button type="button" onClick={() => onChange(9)}>Select test project</button> }));
 vi.mock("@/components/PageHeader", () => ({ PageHeader: ({ title }: { title: string }) => <h1>{title}</h1> }));
-vi.mock("@/lib/trpc", () => ({ trpc: { production: { script: { generatePlatformCopy: { useMutation: () => mocks.adapt } }, social: { listPosts: { useQuery: () => mocks.posts }, listAccounts: { useQuery: () => mocks.accounts }, createPost: { useMutation: () => mocks.create }, disconnectAccount: { useMutation: () => mocks.disconnect }, assignAccount: { useMutation: () => mocks.assign }, cancelDispatch: { useMutation: () => mocks.cancel } } } } }));
+vi.mock("@/lib/trpc", () => ({ trpc: { production: { script: { generatePlatformCopy: { useMutation: () => mocks.adapt } }, social: { listPosts: { useQuery: () => mocks.posts }, listAccounts: { useQuery: () => mocks.accounts }, createPost: { useMutation: () => mocks.create }, disconnectAccount: { useMutation: () => mocks.disconnect }, assignAccount: { useMutation: () => mocks.assign }, cancelDispatch: { useMutation: () => mocks.cancel }, rescheduleDispatch: { useMutation: () => mocks.reschedule } } } } }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 import Publishing from "./Publishing";
@@ -109,5 +109,21 @@ describe("Publishing", () => {
     expect(mocks.cancel.mutateAsync).toHaveBeenCalledWith({ postId: 15 });
     expect(mocks.posts.refetch).toHaveBeenCalled();
     expect(toast.success).toHaveBeenCalledWith("Withdraw release cancelled. It will not be dispatched.");
+  });
+
+  it("reschedules an eligible plan locally while preserving its approval and readiness boundary", async () => {
+    vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+    mocks.posts.data = [{ id: 16, title: "Move release", copy: "Reschedule for review", platform: "youtube", status: "awaiting_approval", scheduledFor: new Date("2026-08-20T09:30:00"), socialAccountId: null }];
+    mocks.reschedule.mutateAsync.mockResolvedValue({ postId: 16, nextExecutionAt: null });
+    container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container);
+    await act(async () => root?.render(<Publishing />));
+    const scheduleInput = container.querySelector('input[aria-label*="Local schedule time for Move release"]') as HTMLInputElement;
+    const inputSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
+    await act(async () => { inputSetter.call(scheduleInput, "2026-08-21T10:15"); scheduleInput.dispatchEvent(new Event("input", { bubbles: true })); scheduleInput.dispatchEvent(new Event("change", { bubbles: true })); });
+    await act(async () => { Array.from(container!.querySelectorAll("button")).find(button => button.textContent?.includes("Save time"))?.click(); await Promise.resolve(); });
+    expect(mocks.reschedule.mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ postId: 16, scheduledFor: expect.any(Date) }));
+    expect((mocks.reschedule.mutateAsync.mock.calls[0]![0]!.scheduledFor as Date).getTime()).toBe(new Date("2026-08-21T10:15").getTime());
+    expect(mocks.posts.refetch).toHaveBeenCalled();
+    expect(toast.success).toHaveBeenCalledWith("Schedule updated. Approval and provider readiness remain enforced.");
   });
 });
