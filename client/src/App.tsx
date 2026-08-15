@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import React from "react";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -18,8 +19,9 @@ import Operations from "./pages/Operations";
 import FoundationPage from "./pages/FoundationPage";
 import Publishing from "./pages/Publishing";
 import ProviderRegistry from "./pages/ProviderRegistry";
+import GuestQuickDraft from "./pages/GuestQuickDraft";
 
-function Router() {
+function WorkspaceRouter() {
   return (
     <DashboardLayout><Switch>
       <Route path={"/"} component={Dashboard} />
@@ -40,6 +42,13 @@ function Router() {
       <Route component={NotFound} />
     </Switch></DashboardLayout>
   );
+}
+
+function Router() {
+  return <Switch>
+    <Route path="/quick-draft" component={GuestQuickDraft} />
+    <Route component={WorkspaceRouter} />
+  </Switch>;
 }
 
 // NOTE: About Theme
