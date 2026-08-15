@@ -259,13 +259,29 @@ describe("provider-backed production procedures", () => {
       await expect(caller.production.social.rescheduleDispatch({ postId: post.id, scheduledFor: revisedSchedule })).resolves.toMatchObject({ postId: post.id, nextExecutionAt: "2026-08-16T10:00:00.000Z" });
       expect(heartbeatMocks.updateHeartbeatJob).toHaveBeenCalledWith("task-social-91", expect.objectContaining({ cron: `0 ${revisedSchedule.getUTCMinutes()} ${revisedSchedule.getUTCHours()} ${revisedSchedule.getUTCDate()} ${revisedSchedule.getUTCMonth() + 1} *`, payload: { postId: post.id } }), "");
 
-      await expect(caller.production.social.cancelDispatch({ postId: post.id })).resolves.toEqual({ postId: post.id, cancelled: true });
+      await expect(caller.production.social.cancelDispatch({ postId: post.id })).resolves.toEqual({ postId: post.id, cancelled: true, queuedAttemptsCancelled: true });
       expect(heartbeatMocks.deleteHeartbeatJob).toHaveBeenCalledWith("task-social-91", "");
+      expect(updateValues).toHaveBeenCalledWith(expect.objectContaining({ status: "cancelled", completedAt: expect.any(Date) }));
       expect(updateValues).toHaveBeenCalledWith(expect.objectContaining({ status: "cancelled", scheduleCronTaskUid: null }));
     } finally {
       if (originalClientId === undefined) delete process.env.YOUTUBE_CLIENT_ID; else process.env.YOUTUBE_CLIENT_ID = originalClientId;
       if (originalClientSecret === undefined) delete process.env.YOUTUBE_CLIENT_SECRET; else process.env.YOUTUBE_CLIENT_SECRET = originalClientSecret;
     }
+  });
+
+  it("does not cancel a published social plan or remove its terminal history", async () => {
+    vi.clearAllMocks();
+    vi.mocked(requireProjectAccess).mockResolvedValue({ project: { id: 9, workspaceId: 3 } } as any);
+    const publishedPost = { id: 92, projectId: 9, workspaceId: 3, platform: "youtube" as const, status: "published" as const, scheduleCronTaskUid: "task-published" };
+    const updateValues = vi.fn();
+    vi.mocked(getDb).mockResolvedValue({
+      select: () => ({ from: () => ({ where: () => queryRows([publishedPost]) }) }),
+      update: () => ({ set: (values: unknown) => ({ where: async () => { updateValues(values); return []; } }) }),
+    } as any);
+
+    await expect(appRouter.createCaller(ctx).production.social.cancelDispatch({ postId: publishedPost.id })).rejects.toThrow(/only unsent publishing plans/i);
+    expect(heartbeatMocks.deleteHeartbeatJob).not.toHaveBeenCalled();
+    expect(updateValues).not.toHaveBeenCalled();
   });
 
   it("requeues an approved failed social dispatch with a unique retry key and audit record", async () => {
