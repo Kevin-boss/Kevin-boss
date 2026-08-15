@@ -4,12 +4,12 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  posts: { data: [] as any[], refetch: vi.fn() }, accounts: { data: [] as any[], refetch: vi.fn() }, create: { mutateAsync: vi.fn(), isPending: false }, adapt: { mutateAsync: vi.fn(), isPending: false }, disconnect: { mutateAsync: vi.fn(), isPending: false }, assign: { mutateAsync: vi.fn(), isPending: false },
+  posts: { data: [] as any[], refetch: vi.fn() }, accounts: { data: [] as any[], refetch: vi.fn() }, create: { mutateAsync: vi.fn(), isPending: false }, adapt: { mutateAsync: vi.fn(), isPending: false }, disconnect: { mutateAsync: vi.fn(), isPending: false }, assign: { mutateAsync: vi.fn(), isPending: false }, cancel: { mutateAsync: vi.fn(), isPending: false },
 }));
 vi.mock("@/hooks/useWorkspace", () => ({ useWorkspace: () => ({ activeWorkspaceId: 3 }) }));
 vi.mock("@/components/ProjectPicker", () => ({ ProjectPicker: ({ onChange }: { onChange: (projectId: number) => void }) => <button type="button" onClick={() => onChange(9)}>Select test project</button> }));
 vi.mock("@/components/PageHeader", () => ({ PageHeader: ({ title }: { title: string }) => <h1>{title}</h1> }));
-vi.mock("@/lib/trpc", () => ({ trpc: { production: { script: { generatePlatformCopy: { useMutation: () => mocks.adapt } }, social: { listPosts: { useQuery: () => mocks.posts }, listAccounts: { useQuery: () => mocks.accounts }, createPost: { useMutation: () => mocks.create }, disconnectAccount: { useMutation: () => mocks.disconnect }, assignAccount: { useMutation: () => mocks.assign } } } } }));
+vi.mock("@/lib/trpc", () => ({ trpc: { production: { script: { generatePlatformCopy: { useMutation: () => mocks.adapt } }, social: { listPosts: { useQuery: () => mocks.posts }, listAccounts: { useQuery: () => mocks.accounts }, createPost: { useMutation: () => mocks.create }, disconnectAccount: { useMutation: () => mocks.disconnect }, assignAccount: { useMutation: () => mocks.assign }, cancelDispatch: { useMutation: () => mocks.cancel } } } } }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 import Publishing from "./Publishing";
@@ -95,5 +95,19 @@ describe("Publishing", () => {
     expect(mocks.assign.mutateAsync).toHaveBeenCalledWith({ postId: 12, socialAccountId: 8 });
     expect(mocks.posts.refetch).toHaveBeenCalled();
     expect(toast.success).toHaveBeenCalledWith("Connected account assigned. Approval is still required before dispatch.");
+  });
+
+  it("confirms cancellation of an eligible local plan and refreshes its review state", async () => {
+    vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+    mocks.posts.data = [{ id: 15, title: "Withdraw release", copy: "No longer needed", platform: "youtube", status: "awaiting_approval", scheduledFor: new Date("2026-08-20T09:30:00"), socialAccountId: null }];
+    mocks.cancel.mutateAsync.mockResolvedValue({ postId: 15, cancelled: true, queuedAttemptsCancelled: true });
+    container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container);
+    await act(async () => root?.render(<Publishing />));
+    await act(async () => Array.from(container!.querySelectorAll("button")).find(button => button.textContent?.includes("Cancel plan"))?.click());
+    expect(document.body.textContent).toContain("Cancel Withdraw release?");
+    await act(async () => { Array.from(document.querySelectorAll("button")).filter(button => button.textContent?.includes("Cancel plan")).at(-1)?.click(); await Promise.resolve(); });
+    expect(mocks.cancel.mutateAsync).toHaveBeenCalledWith({ postId: 15 });
+    expect(mocks.posts.refetch).toHaveBeenCalled();
+    expect(toast.success).toHaveBeenCalledWith("Withdraw release cancelled. It will not be dispatched.");
   });
 });
