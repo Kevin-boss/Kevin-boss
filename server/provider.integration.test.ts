@@ -221,7 +221,7 @@ describe("provider-backed production procedures", () => {
     expect(requireWorkspaceAccess).toHaveBeenCalledWith(user.id, 3, "admin");
     expect(updateValues).toHaveBeenCalledWith(expect.objectContaining({ connectionStatus: "not_connected", encryptedTokenRef: null, tokenExpiresAt: null }));
     expect(updateValues).toHaveBeenCalledWith(expect.objectContaining({ socialAccountId: null, status: "awaiting_approval", approvedAt: null, scheduleCronTaskUid: null }));
-    expect(recordAudit).toHaveBeenCalledWith(expect.objectContaining({ action: "social.account_disconnected", entityType: "social_account", entityId: "82" }));
+    expect(recordAudit).toHaveBeenCalledWith(expect.objectContaining({ action: "social.account_disconnected", entityType: "social_account", entityId: "82", metadata: expect.objectContaining({ preservedTerminalPlanHistory: true }) }));
   });
 
   it("creates, reschedules, and cancels an approved Heartbeat dispatch without provider execution", async () => {
