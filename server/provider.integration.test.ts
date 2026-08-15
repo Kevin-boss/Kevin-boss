@@ -193,14 +193,15 @@ describe("provider-backed production procedures", () => {
     vi.mocked(requireWorkspaceAccess).mockResolvedValue({ workspace: { id: 3 } } as any);
     const readiness = await appRouter.createCaller(ctx).production.social.connectionReadiness({ workspaceId: 3 });
     expect(readiness.map(item => item.platform)).toEqual(["youtube", "tiktok", "facebook", "instagram", "linkedin", "x"]);
-    expect(readiness.find(item => item.platform === "linkedin")).toMatchObject({ webhookSupported: false, webhookMode: "manual_refresh", publicationSupported: true });
+    expect(readiness.find(item => item.platform === "linkedin")).toMatchObject({ webhookSupported: false, webhookMode: "manual_refresh", publicationSupported: true, oauthConnectionAvailable: false });
     expect(JSON.stringify(readiness)).not.toContain(process.env.HF_TOKEN ?? "a-not-configured-token");
   });
 
-  it("does not start official OAuth before the user has activated that platform with its required credentials", async () => {
+  it("does not create an official OAuth redirect before the server-side exchange adapter is active", async () => {
     vi.clearAllMocks();
     vi.mocked(requireWorkspaceAccess).mockResolvedValue({ workspace: { id: 3 } } as any);
-    await expect(appRouter.createCaller(ctx).production.social.beginOAuth({ workspaceId: 3, platform: "youtube", redirectUri: "https://app.example.com/api/social/oauth/callback" })).rejects.toThrow(/Activate YouTube publishing/i);
+    await expect(appRouter.createCaller(ctx).production.social.beginOAuth({ workspaceId: 3, platform: "youtube", redirectUri: "https://app.example.com/api/social/oauth/callback" })).rejects.toThrow(/token-exchange and account-discovery adapter/i);
+    expect(recordAudit).not.toHaveBeenCalled();
   });
 
   it("requeues an approved failed social dispatch with a unique retry key and audit record", async () => {

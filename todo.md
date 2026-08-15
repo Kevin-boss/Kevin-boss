@@ -136,6 +136,7 @@ The user-directed delivery path remains **credential-free draft download**. Publ
 - [x] Add abort support and unmount-safe cleanup for in-flight browser-local WebM rendering, with automated coverage.
 - [ ] Diagnose and fix the reported failure to create and download a credential-free WebM draft video from the Scene Editor. Generated Script Studio scenes now remain available when the persisted editor document is empty, and the direct handoff selects the project in Scene Editor; a real browser preview/download exercise remains required.
 - [ ] Exercise the real quick-draft creation and download path after the generated-project handoff. The type check, 131-test suite, and production build pass; a full browser-level preview/download confirmation remains required before closing the repair.
+- [x] Prevent provider authorization redirects until the corresponding server-side token-exchange adapter is implemented and validated.
 - [x] Add a sign-in-free guest quick-draft creator that generates, previews, and downloads a browser-local WebM without creating or persisting a project.
 - [x] Add guest-flow tests proving anonymous video drafts remain local while saved projects, social publishing, provider-backed voice, and private production workers remain authentication-gated.
 - [x] Directly exercise anonymous guest WebM preview and download in the browser and resolve any browser-specific failure found. A one-scene, three-second local WebM preview rendered without authentication and the browser confirmed download of `My-browser-local-draft-standard.webm`.

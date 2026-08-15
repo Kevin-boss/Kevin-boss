@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { buildSocialOAuthAuthorizationUrl, getMissingSocialProviderCredentials, getSocialProviderContract, socialPlatforms } from "./socialProviderContracts";
+import { buildSocialOAuthAuthorizationUrl, getMissingSocialProviderCredentials, getSocialProviderContract, isSocialOAuthExchangeAdapterReady, socialPlatforms } from "./socialProviderContracts";
 
 describe("official social provider contracts", () => {
   it("lists only verified provider contracts and records the LinkedIn manual-refresh boundary", () => {
     expect(socialPlatforms).toEqual(["youtube", "tiktok", "facebook", "instagram", "linkedin", "x"]);
     expect(getSocialProviderContract("linkedin").webhook).toMatchObject({ supported: false, mode: "manual_refresh" });
     expect(getSocialProviderContract("instagram").publication).toMatchObject({ supported: true, requiresPublicMediaUrl: true });
+    expect(socialPlatforms.every(platform => !isSocialOAuthExchangeAdapterReady(platform))).toBe(true);
   });
 
   it("reports exactly the missing server-side credentials without exposing their values", () => {
