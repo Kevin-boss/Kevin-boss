@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 const hfMocks = vi.hoisted(() => ({ textToSpeech: vi.fn() }));
+const heartbeatMocks = vi.hoisted(() => ({ createHeartbeatJob: vi.fn(), updateHeartbeatJob: vi.fn(), deleteHeartbeatJob: vi.fn() }));
 vi.mock("@huggingface/inference", () => ({ InferenceClient: class { textToSpeech = hfMocks.textToSpeech; } }));
+vi.mock("./_core/heartbeat", () => heartbeatMocks);
 
 import { appRouter } from "./routers";
 import { getDb } from "./db";
@@ -202,6 +204,50 @@ describe("provider-backed production procedures", () => {
     vi.mocked(requireWorkspaceAccess).mockResolvedValue({ workspace: { id: 3 } } as any);
     await expect(appRouter.createCaller(ctx).production.social.beginOAuth({ workspaceId: 3, platform: "youtube", redirectUri: "https://app.example.com/api/social/oauth/callback" })).rejects.toThrow(/token-exchange and account-discovery adapter/i);
     expect(recordAudit).not.toHaveBeenCalled();
+  });
+
+  it("creates, reschedules, and cancels an approved Heartbeat dispatch without provider execution", async () => {
+    vi.clearAllMocks();
+    vi.mocked(requireProjectAccess).mockResolvedValue({ project: { id: 9, workspaceId: 3 } } as any);
+    vi.mocked(recordAudit).mockResolvedValue(undefined as any);
+    const initialSchedule = new Date(Date.now() + 60 * 60 * 1000);
+    const revisedSchedule = new Date(Date.now() + 2 * 60 * 60 * 1000);
+    const post = { id: 91, projectId: 9, workspaceId: 3, platform: "youtube" as const, socialAccountId: 18, deliveryAssetId: 40, status: "scheduled" as const, scheduledFor: initialSchedule, approvedAt: new Date(), createdByUserId: 7, scheduleCronTaskUid: null as string | null, lastDispatchAt: null };
+    const account = { id: 18, workspaceId: 3, platform: "youtube" as const, connectionStatus: "connected" as const };
+    const updateValues = vi.fn();
+    const insertedAttemptValues = vi.fn().mockResolvedValue([{ insertId: 501 }]);
+    vi.mocked(getDb).mockResolvedValue({
+      select: () => ({ from: (table: unknown) => ({ where: () => queryRows(table === scheduledPosts ? [post] : table === socialAccounts ? [account] : []) }) }),
+      insert: () => ({ values: insertedAttemptValues }),
+      update: () => ({ set: (values: unknown) => ({ where: async () => { updateValues(values); return []; } }) }),
+    } as any);
+    heartbeatMocks.createHeartbeatJob.mockResolvedValue({ taskUid: "task-social-91", nextExecutionAt: "2026-08-16T09:00:00.000Z" });
+    heartbeatMocks.updateHeartbeatJob.mockResolvedValue({ nextExecutionAt: "2026-08-16T10:00:00.000Z" });
+    heartbeatMocks.deleteHeartbeatJob.mockResolvedValue(undefined);
+    const originalClientId = process.env.YOUTUBE_CLIENT_ID;
+    const originalClientSecret = process.env.YOUTUBE_CLIENT_SECRET;
+    process.env.YOUTUBE_CLIENT_ID = "test-client-id";
+    process.env.YOUTUBE_CLIENT_SECRET = "test-client-secret";
+
+    try {
+      const caller = appRouter.createCaller(ctx);
+      await expect(caller.production.social.queueDispatch({ postId: post.id })).resolves.toEqual({ attemptId: 501, status: "queued", reused: false });
+      expect(insertedAttemptValues).toHaveBeenCalledWith(expect.objectContaining({ scheduledPostId: post.id, socialAccountId: account.id, status: "queued" }));
+
+      await expect(caller.production.social.scheduleDispatch({ postId: post.id })).resolves.toMatchObject({ postId: post.id, taskUid: "task-social-91" });
+      expect(heartbeatMocks.createHeartbeatJob).toHaveBeenCalledWith(expect.objectContaining({ name: "social-dispatch-91", cron: `0 ${initialSchedule.getUTCMinutes()} ${initialSchedule.getUTCHours()} ${initialSchedule.getUTCDate()} ${initialSchedule.getUTCMonth() + 1} *`, path: "/api/scheduled/social-dispatch", payload: { postId: post.id } }), "");
+
+      post.scheduleCronTaskUid = "task-social-91";
+      await expect(caller.production.social.rescheduleDispatch({ postId: post.id, scheduledFor: revisedSchedule })).resolves.toMatchObject({ postId: post.id, nextExecutionAt: "2026-08-16T10:00:00.000Z" });
+      expect(heartbeatMocks.updateHeartbeatJob).toHaveBeenCalledWith("task-social-91", expect.objectContaining({ cron: `0 ${revisedSchedule.getUTCMinutes()} ${revisedSchedule.getUTCHours()} ${revisedSchedule.getUTCDate()} ${revisedSchedule.getUTCMonth() + 1} *`, payload: { postId: post.id } }), "");
+
+      await expect(caller.production.social.cancelDispatch({ postId: post.id })).resolves.toEqual({ postId: post.id, cancelled: true });
+      expect(heartbeatMocks.deleteHeartbeatJob).toHaveBeenCalledWith("task-social-91", "");
+      expect(updateValues).toHaveBeenCalledWith(expect.objectContaining({ status: "cancelled", scheduleCronTaskUid: null }));
+    } finally {
+      if (originalClientId === undefined) delete process.env.YOUTUBE_CLIENT_ID; else process.env.YOUTUBE_CLIENT_ID = originalClientId;
+      if (originalClientSecret === undefined) delete process.env.YOUTUBE_CLIENT_SECRET; else process.env.YOUTUBE_CLIENT_SECRET = originalClientSecret;
+    }
   });
 
   it("requeues an approved failed social dispatch with a unique retry key and audit record", async () => {

@@ -50,7 +50,8 @@
 - [x] Surface platform-specific copy adaptation in the Publishing workspace using the existing governed generation procedure.
 - [ ] Implement secure social-account OAuth start, callback, connection, disconnect, and account-selection procedures only for verified API contracts.
 - [x] Add a dedicated failed-dispatch retry procedure with approval, account-readiness, unique-idempotency, audit, and integration-test coverage.
-- [ ] Add integration coverage for schedule, reschedule, cancel, and queue transitions once the platform activation path is exercised.
+- [x] Add integration coverage for schedule, reschedule, and cancel transitions without provider execution; live platform activation remains separately credential- and adapter-dependent.
+- [x] Add explicit integration coverage for the approved ready-plan queue transition without invoking an external provider.
 - [ ] Activate the private-worker controls for deployed catalog-level voice parameters and final-render lifecycle without exposing worker URLs or credentials.
 - [ ] Extend API, integration, and user-flow tests for OAuth connection management and the full scheduling/dispatch lifecycle alongside calendar, adaptation, and private-worker boundaries.
 - [x] Consolidate all verified remaining external API-key requirements into one final collection request after implementation scaffolding is complete.
