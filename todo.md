@@ -147,3 +147,4 @@ The user-directed delivery path remains **credential-free draft download**. Publ
 - [x] Push the latest validated AI Content OS project state to the connected GitHub repository.
 - [x] Review each remaining deferred item autonomously, complete any credential-independent portion, and record exact user-authentication, credential, or administrator-deployment dependencies for the rest.
 - [x] Code-split noncritical authenticated workspace routes while keeping the public guest quick-draft route immediately available.
+- [x] Split stable third-party client dependencies into cacheable production chunks to reduce the initial entry bundle warning.
