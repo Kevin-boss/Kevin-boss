@@ -153,3 +153,4 @@ The user-directed delivery path remains **credential-free draft download**. Publ
 - [x] Preserve published and cancelled social plan history when disconnecting an account, while invalidating only dispatchable plans.
 - [x] Add server-only validation and single-use consumption of social OAuth callback state without token exchange or browser exposure of the PKCE verifier.
 - [x] Synchronize the subsequent validated autonomous hardening checkpoints to the connected GitHub repository.
+- [x] Add a Publishing review-queue control that assigns only a matching connected official account to a plan and refreshes its readiness state.

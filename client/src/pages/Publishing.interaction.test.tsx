@@ -4,12 +4,12 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  posts: { data: [] as any[], refetch: vi.fn() }, accounts: { data: [] as any[], refetch: vi.fn() }, create: { mutateAsync: vi.fn(), isPending: false }, adapt: { mutateAsync: vi.fn(), isPending: false }, disconnect: { mutateAsync: vi.fn(), isPending: false },
+  posts: { data: [] as any[], refetch: vi.fn() }, accounts: { data: [] as any[], refetch: vi.fn() }, create: { mutateAsync: vi.fn(), isPending: false }, adapt: { mutateAsync: vi.fn(), isPending: false }, disconnect: { mutateAsync: vi.fn(), isPending: false }, assign: { mutateAsync: vi.fn(), isPending: false },
 }));
 vi.mock("@/hooks/useWorkspace", () => ({ useWorkspace: () => ({ activeWorkspaceId: 3 }) }));
 vi.mock("@/components/ProjectPicker", () => ({ ProjectPicker: ({ onChange }: { onChange: (projectId: number) => void }) => <button type="button" onClick={() => onChange(9)}>Select test project</button> }));
 vi.mock("@/components/PageHeader", () => ({ PageHeader: ({ title }: { title: string }) => <h1>{title}</h1> }));
-vi.mock("@/lib/trpc", () => ({ trpc: { production: { script: { generatePlatformCopy: { useMutation: () => mocks.adapt } }, social: { listPosts: { useQuery: () => mocks.posts }, listAccounts: { useQuery: () => mocks.accounts }, createPost: { useMutation: () => mocks.create }, disconnectAccount: { useMutation: () => mocks.disconnect } } } } }));
+vi.mock("@/lib/trpc", () => ({ trpc: { production: { script: { generatePlatformCopy: { useMutation: () => mocks.adapt } }, social: { listPosts: { useQuery: () => mocks.posts }, listAccounts: { useQuery: () => mocks.accounts }, createPost: { useMutation: () => mocks.create }, disconnectAccount: { useMutation: () => mocks.disconnect }, assignAccount: { useMutation: () => mocks.assign } } } } }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 import Publishing from "./Publishing";
@@ -78,5 +78,22 @@ describe("Publishing", () => {
     expect(mocks.accounts.refetch).toHaveBeenCalled();
     expect(mocks.posts.refetch).toHaveBeenCalled();
     expect(toast.success).toHaveBeenCalledWith("Studio Channel disconnected. Linked plans now require reassignment and approval.");
+  });
+
+  it("assigns only a matching connected official account from the review queue", async () => {
+    vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+    mocks.posts.data = [{ id: 12, title: "YouTube release", copy: "Ready for approval", platform: "youtube", status: "awaiting_approval", scheduledFor: new Date("2026-08-20T09:30:00"), socialAccountId: null }];
+    mocks.accounts.data = [{ id: 8, accountName: "Studio Channel", platform: "youtube", connectionStatus: "connected" }, { id: 9, accountName: "Shorts Profile", platform: "tiktok", connectionStatus: "connected" }];
+    mocks.assign.mutateAsync.mockResolvedValue({ postId: 12, socialAccountId: 8 });
+    container = document.createElement("div"); document.body.appendChild(container); root = createRoot(container);
+    await act(async () => root?.render(<Publishing />));
+    const accountSelect = container.querySelector('select[aria-label*="Connected YouTube account"]') as HTMLSelectElement;
+    expect(accountSelect.textContent).toContain("Studio Channel");
+    expect(accountSelect.textContent).not.toContain("Shorts Profile");
+    const selectSetter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!;
+    await act(async () => { selectSetter.call(accountSelect, "8"); accountSelect.dispatchEvent(new Event("change", { bubbles: true })); await Promise.resolve(); });
+    expect(mocks.assign.mutateAsync).toHaveBeenCalledWith({ postId: 12, socialAccountId: 8 });
+    expect(mocks.posts.refetch).toHaveBeenCalled();
+    expect(toast.success).toHaveBeenCalledWith("Connected account assigned. Approval is still required before dispatch.");
   });
 });
