@@ -61,3 +61,19 @@ export function getMissingSocialProviderCredentials(platform: SocialPlatform, en
   const keys = socialProviderContracts[platform].credentialKeys;
   return [keys.clientId, keys.clientSecret, keys.webhookSecret].filter((key): key is string => typeof key === "string" && !env[key]);
 }
+
+export function buildSocialOAuthAuthorizationUrl(input: { platform: SocialPlatform; clientId: string; redirectUri: string; state: string; codeChallenge?: string }) {
+  const contract = getSocialProviderContract(input.platform);
+  const url = new URL(contract.oauth.authorizationUrl);
+  url.searchParams.set("response_type", "code");
+  url.searchParams.set("client_id", input.clientId);
+  url.searchParams.set("redirect_uri", input.redirectUri);
+  url.searchParams.set("scope", contract.oauth.scopes.join(" "));
+  url.searchParams.set("state", input.state);
+  if (contract.oauth.requiresPkce) {
+    if (!input.codeChallenge) throw new Error(`${contract.displayName} OAuth requires a PKCE code challenge.`);
+    url.searchParams.set("code_challenge", input.codeChallenge);
+    url.searchParams.set("code_challenge_method", "S256");
+  }
+  return url.toString();
+}

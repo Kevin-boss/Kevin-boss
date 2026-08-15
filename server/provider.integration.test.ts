@@ -197,6 +197,12 @@ describe("provider-backed production procedures", () => {
     expect(JSON.stringify(readiness)).not.toContain(process.env.HF_TOKEN ?? "a-not-configured-token");
   });
 
+  it("does not start official OAuth before the user has activated that platform with its required credentials", async () => {
+    vi.clearAllMocks();
+    vi.mocked(requireWorkspaceAccess).mockResolvedValue({ workspace: { id: 3 } } as any);
+    await expect(appRouter.createCaller(ctx).production.social.beginOAuth({ workspaceId: 3, platform: "youtube", redirectUri: "https://app.example.com/api/social/oauth/callback" })).rejects.toThrow(/Activate YouTube publishing/i);
+  });
+
   it("requeues an approved failed social dispatch with a unique retry key and audit record", async () => {
     vi.clearAllMocks();
     vi.mocked(requireProjectAccess).mockResolvedValue({ project: { id: 9, workspaceId: 3 } } as any);
