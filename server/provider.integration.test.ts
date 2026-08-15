@@ -206,6 +206,24 @@ describe("provider-backed production procedures", () => {
     expect(recordAudit).not.toHaveBeenCalled();
   });
 
+  it("disconnects a workspace social account locally and invalidates linked dispatch plans", async () => {
+    vi.clearAllMocks();
+    vi.mocked(requireWorkspaceAccess).mockResolvedValue({ workspace: { id: 3 } } as any);
+    vi.mocked(recordAudit).mockResolvedValue(undefined as any);
+    const account = { id: 82, workspaceId: 3, platform: "youtube" as const, connectionStatus: "connected" as const, encryptedTokenRef: "credential-ref" };
+    const updateValues = vi.fn();
+    vi.mocked(getDb).mockResolvedValue({
+      select: () => ({ from: (table: unknown) => ({ where: () => queryRows(table === socialAccounts ? [account] : []) }) }),
+      update: () => ({ set: (values: unknown) => ({ where: async () => { updateValues(values); return []; } }) }),
+    } as any);
+
+    await expect(appRouter.createCaller(ctx).production.social.disconnectAccount({ workspaceId: 3, accountId: account.id })).resolves.toEqual({ accountId: account.id, connectionStatus: "not_connected", linkedPlansInvalidated: true });
+    expect(requireWorkspaceAccess).toHaveBeenCalledWith(user.id, 3, "admin");
+    expect(updateValues).toHaveBeenCalledWith(expect.objectContaining({ connectionStatus: "not_connected", encryptedTokenRef: null, tokenExpiresAt: null }));
+    expect(updateValues).toHaveBeenCalledWith(expect.objectContaining({ socialAccountId: null, status: "awaiting_approval", approvedAt: null, scheduleCronTaskUid: null }));
+    expect(recordAudit).toHaveBeenCalledWith(expect.objectContaining({ action: "social.account_disconnected", entityType: "social_account", entityId: "82" }));
+  });
+
   it("creates, reschedules, and cancels an approved Heartbeat dispatch without provider execution", async () => {
     vi.clearAllMocks();
     vi.mocked(requireProjectAccess).mockResolvedValue({ project: { id: 9, workspaceId: 3 } } as any);

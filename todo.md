@@ -148,3 +148,4 @@ The user-directed delivery path remains **credential-free draft download**. Publ
 - [x] Review each remaining deferred item autonomously, complete any credential-independent portion, and record exact user-authentication, credential, or administrator-deployment dependencies for the rest.
 - [x] Code-split noncritical authenticated workspace routes while keeping the public guest quick-draft route immediately available.
 - [x] Split stable third-party client dependencies into cacheable production chunks to reduce the initial entry bundle warning.
+- [x] Add a role-gated social-account disconnection action that revokes the server-side credential reference and invalidates linked scheduled plans without calling an external provider.
