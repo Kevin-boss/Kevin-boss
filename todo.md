@@ -145,3 +145,5 @@ The user-directed delivery path remains **credential-free draft download**. Publ
 - [x] Audit and improve production-quality video controls, natural-voice selection, and provenance while preserving the credential-free browser-draft fallback. Production MP4 now carries an explicit standard or high-fidelity worker manifest; Voice & Captions labels public model-default fallback versus private neural quality and retains consent-controlled delivery controls.
 - [x] Add regression coverage proving the quality tier, natural-voice boundary, and private-worker activation requirements are communicated and enforced correctly.
 - [x] Push the latest validated AI Content OS project state to the connected GitHub repository.
+- [x] Review each remaining deferred item autonomously, complete any credential-independent portion, and record exact user-authentication, credential, or administrator-deployment dependencies for the rest.
+- [x] Code-split noncritical authenticated workspace routes while keeping the public guest quick-draft route immediately available.

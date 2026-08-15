@@ -5,42 +5,55 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Dashboard from "./pages/Dashboard";
-import ScriptStudio from "./pages/ScriptStudio";
-import DashboardLayout from "./components/DashboardLayout";
-import Research from "./pages/Research";
-import AssetLibrary from "./pages/AssetLibrary";
-import Copilot from "./pages/Copilot";
-import TimelineEditor from "./pages/TimelineEditor";
-import VoiceCaptions from "./pages/VoiceCaptions";
-import Jobs from "./pages/Jobs";
-import Workspace from "./pages/Workspace";
-import Operations from "./pages/Operations";
-import FoundationPage from "./pages/FoundationPage";
-import Publishing from "./pages/Publishing";
-import ProviderRegistry from "./pages/ProviderRegistry";
 import GuestQuickDraft from "./pages/GuestQuickDraft";
+
+const DashboardLayout = React.lazy(() => import("./components/DashboardLayout"));
+const Dashboard = React.lazy(() => import("./pages/Dashboard"));
+const ScriptStudio = React.lazy(() => import("./pages/ScriptStudio"));
+const Research = React.lazy(() => import("./pages/Research"));
+const AssetLibrary = React.lazy(() => import("./pages/AssetLibrary"));
+const Copilot = React.lazy(() => import("./pages/Copilot"));
+const TimelineEditor = React.lazy(() => import("./pages/TimelineEditor"));
+const VoiceCaptions = React.lazy(() => import("./pages/VoiceCaptions"));
+const Jobs = React.lazy(() => import("./pages/Jobs"));
+const Workspace = React.lazy(() => import("./pages/Workspace"));
+const Operations = React.lazy(() => import("./pages/Operations"));
+const FoundationPage = React.lazy(() => import("./pages/FoundationPage"));
+const Publishing = React.lazy(() => import("./pages/Publishing"));
+const ProviderRegistry = React.lazy(() => import("./pages/ProviderRegistry"));
+
+function WorkspaceRouteLoadingFallback() {
+  return (
+    <main className="min-h-screen bg-background px-6 py-10 text-foreground" role="status" aria-live="polite">
+      <div className="mx-auto max-w-6xl animate-pulse rounded-2xl border border-border bg-card p-6 text-sm text-muted-foreground">
+        Loading workspace…
+      </div>
+    </main>
+  );
+}
 
 function WorkspaceRouter() {
   return (
-    <DashboardLayout><Switch>
-      <Route path={"/"} component={Dashboard} />
-      <Route path={"/projects"} component={Dashboard} />
-      <Route path={"/studio"} component={ScriptStudio} />
-      <Route path={"/research"} component={Research} />
-      <Route path={"/assets"} component={AssetLibrary} />
-      <Route path={"/editor"} component={TimelineEditor} />
-      <Route path={"/voice"} component={VoiceCaptions} />
-      <Route path={"/jobs"} component={Jobs} />
-      <Route path={"/copilot"} component={Copilot} />
-      <Route path="/workspace" component={Workspace} />
-      <Route path="/operations" component={Operations} />
-      <Route path={"/publish"} component={Publishing} />
-      <Route path={"/analytics"}><FoundationPage eyebrow="Intelligence" title="Analytics workspace" description="Performance records are designed to ingest only official platform data. Connect approved accounts to begin synchronizing verified views, watch time, engagement, and publication state." /></Route>
-      <Route path={"/settings"} component={ProviderRegistry} />
-      <Route path={"/404"} component={NotFound} />
-      <Route component={NotFound} />
-    </Switch></DashboardLayout>
+    <React.Suspense fallback={<WorkspaceRouteLoadingFallback />}>
+      <DashboardLayout><Switch>
+        <Route path={"/"} component={Dashboard} />
+        <Route path={"/projects"} component={Dashboard} />
+        <Route path={"/studio"} component={ScriptStudio} />
+        <Route path={"/research"} component={Research} />
+        <Route path={"/assets"} component={AssetLibrary} />
+        <Route path={"/editor"} component={TimelineEditor} />
+        <Route path={"/voice"} component={VoiceCaptions} />
+        <Route path={"/jobs"} component={Jobs} />
+        <Route path={"/copilot"} component={Copilot} />
+        <Route path="/workspace" component={Workspace} />
+        <Route path="/operations" component={Operations} />
+        <Route path={"/publish"} component={Publishing} />
+        <Route path={"/analytics"}><FoundationPage eyebrow="Intelligence" title="Analytics workspace" description="Performance records are designed to ingest only official platform data. Connect approved accounts to begin synchronizing verified views, watch time, engagement, and publication state." /></Route>
+        <Route path={"/settings"} component={ProviderRegistry} />
+        <Route path={"/404"} component={NotFound} />
+        <Route component={NotFound} />
+      </Switch></DashboardLayout>
+    </React.Suspense>
   );
 }
 
