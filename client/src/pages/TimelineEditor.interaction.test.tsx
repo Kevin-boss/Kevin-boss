@@ -13,7 +13,7 @@ vi.mock("@/lib/trpc", () => ({
     production: {
       script: { get: { useQuery: () => ({ data: [{ content: { scenes: [scene] } }] }) } },
       editor: {
-        get: { useQuery: () => ({ data: { id: 17, projectDocument: { scenes: [scene], tracks: [] } } }) },
+        get: { useQuery: () => ({ data: { id: 17, projectDocument: { scenes: [], tracks: [] } } }) },
         save: { useMutation: () => mocks.save },
       },
       render: { request: { useMutation: () => mocks.render } },
@@ -86,7 +86,7 @@ describe("Timeline Editor interactions", () => {
     expect(container.textContent).toContain("natural voice, realistic footage, and long-form jobs approaching one hour");
     const renderButton = Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Queue production MP4"))!;
     await act(async () => { renderButton.click(); await Promise.resolve(); });
-    expect(mocks.render.mutateAsync).toHaveBeenCalledWith({ projectId: 9, versionId: 17, preset: "youtube_1080p" });
+    expect(mocks.render.mutateAsync).toHaveBeenCalledWith({ projectId: 9, versionId: 17, preset: "youtube_1080p", quality: "high_fidelity" });
     expect(mocks.refetchExports).toHaveBeenCalledOnce();
     expect(toast.success).toHaveBeenCalledWith("Render queued but no worker is configured yet.");
   });
@@ -100,5 +100,16 @@ describe("Timeline Editor interactions", () => {
     await selectProject();
     const renderButton = Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Queue production MP4"))!;
     expect(renderButton.disabled).toBe(true);
+  });
+
+  it("opens the generated project from the Script Studio editor handoff URL without requiring a second selection", async () => {
+    await act(async () => root.unmount());
+    window.history.replaceState({}, "", "/editor?project=1");
+    root = createRoot(container);
+    const { default: TimelineEditor } = await import("./TimelineEditor");
+    await act(async () => root.render(<TimelineEditor />));
+    expect(container.textContent).toContain("Video export");
+    expect(Array.from(container.querySelectorAll("button")).some((button) => button.textContent?.includes("Download quick draft"))).toBe(true);
+    window.history.replaceState({}, "", "/editor");
   });
 });

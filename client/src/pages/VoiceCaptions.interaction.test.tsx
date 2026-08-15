@@ -81,6 +81,15 @@ describe("Voice and Captions creator interactions", () => {
     expect(toast.success).toHaveBeenCalledWith("Approved voice audio is ready for review.");
   });
 
+  it("labels the public provider as a model-default fallback and withholds private delivery controls", async () => {
+    const chooseButton = Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Choose voice"))!;
+    await act(async () => chooseButton.click());
+    expect(container.textContent).toContain("Public model-default voice");
+    expect(container.textContent).toContain("Consistent public fallback");
+    expect(container.textContent).toContain("intentionally ignores private-worker delivery controls");
+    expect(container.querySelector('[aria-label="Narration delivery speed"]')).toBeNull();
+  });
+
   it("surfaces a synthesis failure without clearing the selected approved voice", async () => {
     mocks.synthesize.mutateAsync.mockRejectedValue(new Error("Provider rejected request"));
     const chooseButton = Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Choose voice"))!;
@@ -98,6 +107,8 @@ describe("Voice and Captions creator interactions", () => {
     await renderAndSelectProject();
     mocks.synthesize.mutateAsync.mockResolvedValue({ assetId: 72, url: "https://media.test/private-voice.wav" });
     await act(async () => Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Choose voice"))?.click());
+    expect(container.textContent).toContain("Private neural-voice route");
+    expect(container.textContent).toContain("Natural-delivery controls require a private worker");
     const select = container.querySelector('[aria-label="Narration delivery speed"]') as HTMLSelectElement;
     const selectSetter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")!.set!;
     await act(async () => { selectSetter.call(select, "1.1"); select.dispatchEvent(new Event("change", { bubbles: true })); });

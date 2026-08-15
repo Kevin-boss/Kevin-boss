@@ -7,11 +7,12 @@ import { toast } from "sonner";
 const mocks = vi.hoisted(() => ({
   generate: { isPending: false, mutateAsync: vi.fn() },
   refetch: vi.fn(),
+  script: [] as any[],
 }));
 
 vi.mock("@/lib/trpc", () => {
   const mutation = (value = { isPending: false, mutateAsync: vi.fn() }) => ({ useMutation: () => value });
-  return { trpc: { production: { script: { get: { useQuery: () => ({ data: [], refetch: mocks.refetch }) }, generate: mutation(mocks.generate), updateScene: mutation(), attachSceneCitations: mutation(), regenerateScene: mutation(), reviewSceneVariant: mutation(), generatePlatformCopy: mutation() }, research: { list: { useQuery: () => ({ data: { citations: [] } }) } } } } };
+  return { trpc: { production: { script: { get: { useQuery: () => ({ data: mocks.script, refetch: mocks.refetch }) }, generate: mutation(mocks.generate), updateScene: mutation(), attachSceneCitations: mutation(), regenerateScene: mutation(), reviewSceneVariant: mutation(), generatePlatformCopy: mutation() }, research: { list: { useQuery: () => ({ data: { citations: [] } }) } } } } };
 });
 vi.mock("@/components/PageHeader", () => ({ PageHeader: ({ title }: { title: string }) => <header>{title}</header> }));
 vi.mock("@/components/ProjectPicker", () => ({ ProjectPicker: ({ onChange }: { onChange: (id: number) => void }) => <button type="button" onClick={() => onChange(9)}>Select test project</button> }));
@@ -32,6 +33,7 @@ describe("Script Studio generation UI", () => {
     mocks.generate.isPending = false;
     mocks.generate.mutateAsync.mockReset();
     mocks.refetch.mockReset();
+    mocks.script = [];
     vi.mocked(toast.success).mockReset();
     vi.mocked(toast.error).mockReset();
     container = document.createElement("div");
@@ -72,5 +74,17 @@ describe("Script Studio generation UI", () => {
     await act(async () => projectButton.click());
     const button = Array.from(container.querySelectorAll("button")).find((item) => item.textContent?.includes("Building scene plan"))!;
     expect(button.disabled).toBe(true);
+  });
+
+  it("offers the direct Scene Editor video-draft handoff once generated scenes are available", async () => {
+    await act(async () => root.unmount());
+    mocks.script = [{ content: { title: "Generated video plan", language: "en", hook: "Open strong", summary: "A production-ready sequence", cta: "Watch now", scenes: [{ id: "scene_001", duration: 3, voiceover: "Voice", visualPrompt: "Visual", broll: "B-roll", onscreenText: "Title", transition: "cut", music: "ambient", soundEffect: "none" }], sceneVariants: [] } }];
+    root = createRoot(container);
+    const { default: ScriptStudio } = await import("./ScriptStudio");
+    await act(async () => root.render(<ScriptStudio />));
+    const projectButton = Array.from(container.querySelectorAll("button")).find((button) => button.textContent?.includes("Select test project"))!;
+    await act(async () => projectButton.click());
+    expect(Array.from(container.querySelectorAll("button")).some((button) => button.textContent?.includes("Create video draft"))).toBe(true);
+    expect(container.textContent).toContain("Open the Scene Editor to generate an immediate browser-local WebM preview");
   });
 });

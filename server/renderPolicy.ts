@@ -1,23 +1,34 @@
 export type ExportPreset = "youtube_1080p" | "vertical_1080x1920" | "square_1080";
+export type RenderQuality = "standard" | "high_fidelity";
 
 export type RenderManifest = {
   preset: ExportPreset;
+  quality: RenderQuality;
   width: number;
   height: number;
   videoCodec: "h264";
   audioCodec: "aac";
   container: "mp4";
+  frameRate: 24 | 30;
+  targetVideoBitrate: number;
+  targetAudioBitrate: number;
+  audioSampleRate: 44100 | 48000;
   maxDurationSeconds: number;
 };
 
-const manifests: Record<ExportPreset, RenderManifest> = {
-  youtube_1080p: { preset: "youtube_1080p", width: 1920, height: 1080, videoCodec: "h264", audioCodec: "aac", container: "mp4", maxDurationSeconds: 3600 },
-  vertical_1080x1920: { preset: "vertical_1080x1920", width: 1080, height: 1920, videoCodec: "h264", audioCodec: "aac", container: "mp4", maxDurationSeconds: 900 },
-  square_1080: { preset: "square_1080", width: 1080, height: 1080, videoCodec: "h264", audioCodec: "aac", container: "mp4", maxDurationSeconds: 900 },
+const dimensions: Record<ExportPreset, Pick<RenderManifest, "width" | "height" | "maxDurationSeconds">> = {
+  youtube_1080p: { width: 1920, height: 1080, maxDurationSeconds: 3600 },
+  vertical_1080x1920: { width: 1080, height: 1920, maxDurationSeconds: 900 },
+  square_1080: { width: 1080, height: 1080, maxDurationSeconds: 900 },
 };
 
-export function getRenderManifest(preset: ExportPreset): RenderManifest {
-  return manifests[preset];
+const qualityProfiles: Record<RenderQuality, Pick<RenderManifest, "frameRate" | "targetVideoBitrate" | "targetAudioBitrate" | "audioSampleRate">> = {
+  standard: { frameRate: 24, targetVideoBitrate: 8_000_000, targetAudioBitrate: 128_000, audioSampleRate: 44100 },
+  high_fidelity: { frameRate: 30, targetVideoBitrate: 12_000_000, targetAudioBitrate: 192_000, audioSampleRate: 48000 },
+};
+
+export function getRenderManifest(preset: ExportPreset, quality: RenderQuality = "high_fidelity"): RenderManifest {
+  return { preset, quality, ...dimensions[preset], ...qualityProfiles[quality], videoCodec: "h264", audioCodec: "aac", container: "mp4" };
 }
 
 export function validateRenderResponse(response: { storageKey?: unknown; mimeType?: unknown; durationSeconds?: unknown }, manifest: RenderManifest) {
@@ -27,6 +38,6 @@ export function validateRenderResponse(response: { storageKey?: unknown; mimeTyp
   return { ok: true as const };
 }
 
-export function buildRenderManifestPayload(preset: ExportPreset, projectId: number, versionId: number, jobId: number) {
-  return { jobId, projectId, versionId, manifest: getRenderManifest(preset) };
+export function buildRenderManifestPayload(preset: ExportPreset, projectId: number, versionId: number, jobId: number, quality: RenderQuality = "high_fidelity") {
+  return { jobId, projectId, versionId, manifest: getRenderManifest(preset, quality) };
 }
