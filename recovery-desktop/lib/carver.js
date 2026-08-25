@@ -7,6 +7,8 @@ const path = require('node:path');
 const CHUNK_SIZE = 1024 * 1024;
 const MAX_RECOVERY_SIZE = 512 * 1024 * 1024;
 const MAX_CANDIDATES = 10000;
+const TEXT_MIN_SIZE = 128;
+const TEXT_SIGNATURE = { id: 'text', extension: '.txt', mime: 'text/plain', header: Buffer.alloc(0), end: 'text' };
 
 const SIGNATURES = [
   { id: 'jpeg', extension: '.jpg', mime: 'image/jpeg', header: Buffer.from([0xff, 0xd8, 0xff]), end: Buffer.from([0xff, 0xd9]) },
@@ -21,6 +23,35 @@ const SIGNATURES = [
 
 function indexOfBuffer(haystack, needle, from = 0) {
   return haystack.indexOf(needle, from);
+}
+
+function findTextRuns(data) {
+  const runs = [];
+  let start = -1;
+  let last = -1;
+  let printable = 0;
+  let total = 0;
+  const flush = () => {
+    if (start >= 0 && last - start + 1 >= TEXT_MIN_SIZE && printable / Math.max(total, 1) >= 0.95) runs.push({ start, end: last + 1 });
+    start = -1;
+    last = -1;
+    printable = 0;
+    total = 0;
+  };
+  for (let index = 0; index < data.length; index += 1) {
+    const byte = data[index];
+    const allowed = byte === 9 || byte === 10 || byte === 13 || (byte >= 32 && byte <= 126);
+    if (allowed) {
+      if (start < 0) start = index;
+      last = index;
+      printable += 1;
+      total += 1;
+    } else if (start >= 0) {
+      flush();
+    }
+  }
+  flush();
+  return runs;
 }
 
 async function readExactly(handle, position, length) {
@@ -73,6 +104,7 @@ async function determineSize(handle, start, signature, totalBytes) {
   if (signature.end === 'bounded') {
     return Math.min(signature.maxSize, totalBytes == null ? signature.maxSize : Math.max(0, totalBytes - start));
   }
+  if (signature.end === 'text') return Math.min(MAX_RECOVERY_SIZE, Math.max(0, totalBytes == null ? TEXT_MIN_SIZE : totalBytes - start));
   const maxLength = Math.min(MAX_RECOVERY_SIZE, totalBytes == null ? MAX_RECOVERY_SIZE : Math.max(0, totalBytes - start));
   const markerAt = await findMarker(handle, start + signature.header.length, signature.end, maxLength);
   if (markerAt < 0) return -1;
@@ -125,6 +157,16 @@ async function scanStorage(sourcePath, options = {}) {
           at = position + Math.max(signature.header.length, 1);
         }
       }
+      if (candidates.length < MAX_CANDIDATES) {
+        for (const run of findTextRuns(data)) {
+          const absoluteOffset = dataBaseOffset + run.start;
+          const key = `text:${absoluteOffset}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            candidates.push({ signature: TEXT_SIGNATURE, offset: absoluteOffset, fixedSize: run.end - run.start });
+          }
+        }
+      }
       offset += bytesRead;
       carry = data.subarray(Math.max(0, data.length - maxHeaderLength));
       onProgress({ bytesRead: offset, totalBytes, found: candidates.length });
@@ -132,7 +174,7 @@ async function scanStorage(sourcePath, options = {}) {
 
     for (const candidate of candidates) {
       if (signal?.aborted) throw new Error('Scan cancelled');
-      const size = await determineSize(handle, candidate.offset, candidate.signature, totalBytes);
+      const size = candidate.fixedSize || await determineSize(handle, candidate.offset, candidate.signature, totalBytes);
       if (size > 0) {
         results.push({
           id: `${candidate.signature.id}-${candidate.offset}`,
@@ -196,5 +238,5 @@ async function recoverFiles(sourcePath, items, destination, options = {}) {
   return recovered;
 }
 
-module.exports = { SIGNATURES, scanStorage, recoverFiles, MAX_RECOVERY_SIZE };
+module.exports = { SIGNATURES, scanStorage, recoverFiles, MAX_RECOVERY_SIZE, TEXT_MIN_SIZE };
 

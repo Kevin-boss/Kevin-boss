@@ -4,6 +4,7 @@ const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron');
 const path = require('node:path');
 const { scanStorage, recoverFiles } = require('./lib/carver');
 const { listSources } = require('./lib/sources');
+const { createPreview } = require('./lib/preview');
 
 let mainWindow;
 let activeJob = null;
@@ -88,6 +89,12 @@ ipcMain.handle('recovery:start', async (event, payload) => {
 ipcMain.handle('job:cancel', () => {
   cancelActiveJob();
   return true;
+});
+ipcMain.handle('preview:create', async (event, payload) => {
+  const source = ensureString(payload?.sourcePath, 'Source');
+  if (!payload?.item || typeof payload.item !== 'object') throw new Error('A file must be selected for preview.');
+  const previewDirectory = path.join(app.getPath('temp'), 'Recovery Desk', 'previews');
+  return createPreview(source, payload.item, previewDirectory);
 });
 ipcMain.handle('file:open-location', async (event, filePath) => {
   const target = ensureString(filePath, 'File path');

@@ -52,6 +52,7 @@ async function main() {
     '# Recovery Desk USB Bundle',
     '',
     'This folder contains separate portable builds for each desktop operating system. There is no single executable that can run on Windows, macOS, and Linux because each operating system uses a different application format.',
+    'A quick PDF manual is included as Recovery Desk User Manual.pdf.',
     '',
     '## Before recovery',
     '',
@@ -69,6 +70,8 @@ async function main() {
     ''
   ].join('\n');
   await fsp.writeFile(path.join(bundle, 'START HERE.md'), guide);
+  const manual = path.join(root, 'manual', 'main.pdf');
+  if (await fsp.access(manual).then(() => true).catch(() => false)) await fsp.copyFile(manual, path.join(bundle, 'Recovery Desk User Manual.pdf'));
   await fsp.writeFile(path.join(bundle, 'Windows', 'Run Recovery Desk.cmd'), '@echo off\nstart "" "%~dp0Recovery Desk Portable.exe"\n');
   await fsp.writeFile(path.join(bundle, 'macOS', 'Run Recovery Desk.command'), '#!/bin/sh\nopen "$(dirname "$0")/Recovery Desk.app"\n');
   await fsp.chmod(path.join(bundle, 'macOS', 'Run Recovery Desk.command'), 0o755);

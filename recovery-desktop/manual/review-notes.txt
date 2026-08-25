@@ -1,0 +1,7 @@
+Visual review of /home/ubuntu/Kevin-boss/recovery-desktop/manual/main.pdf on 2026-08-25:
+- Page 1 title page renders cleanly with centered title, subtitle, and date.
+- Page 2 contents page is readable and correctly lists sections.
+- Page 3 launch table, USB folder diagram, and five-step workflow fit within margins without clipping.
+- Page 4 filter/preview table and troubleshooting content render cleanly with no visible overflow.
+- Page 5 supported file signatures section renders correctly and closes the document cleanly.
+- No visible typography, overflow, or page-break defects were observed during manual review.

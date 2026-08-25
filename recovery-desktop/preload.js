@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('recoveryAPI', {
   startScan: (sourcePath) => ipcRenderer.invoke('scan:start', sourcePath),
   startRecovery: (payload) => ipcRenderer.invoke('recovery:start', payload),
   cancelJob: () => ipcRenderer.invoke('job:cancel'),
+  createPreview: (payload) => ipcRenderer.invoke('preview:create', payload),
   openLocation: (filePath) => ipcRenderer.invoke('file:open-location', filePath),
   onScanProgress: (callback) => ipcRenderer.on('scan:progress', (_event, payload) => callback(payload)),
   onScanComplete: (callback) => ipcRenderer.on('scan:complete', (_event, payload) => callback(payload)),

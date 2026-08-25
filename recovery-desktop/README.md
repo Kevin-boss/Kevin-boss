@@ -43,9 +43,9 @@ For a complete USB bundle, build the three platform artifacts and then combine t
 
 ## Filtering recovery results
 
-After a scan completes, use the filter toolbar above the results table to narrow recoverable fragments by keyword, file type, confidence level, minimum size, and maximum size. The keyword search checks the generated filename, detected type, MIME type, and extension. The filters are applied locally to the scan results and do not rescan or modify the source.
+After a scan completes, use the filter toolbar above the results table to narrow recoverable fragments by keyword, file type, confidence level, minimum size, and maximum size. The keyword search checks the generated filename, detected type, MIME type, and extension. Click any result row to open the preview pane before selecting it for recovery. The filters are applied locally to the scan results and do not rescan or modify the source.
 
-Select individual rows or use **Select visible** to select only the rows currently shown. If a filter hides an already selected row, that row remains selected; the recovery panel always shows the total selected count. Review that count before choosing a destination and starting recovery.
+Select individual rows or use **Select visible** to select only the rows currently shown. If a filter hides an already selected row, that row remains selected; the recovery panel always shows the total selected count. Review that count before choosing a destination and starting recovery. Text previews are bounded to 2 MB, image previews are displayed locally, and video previews use a temporary local copy capped at 128 MB. Unsupported or oversized files remain recoverable even when preview is unavailable.
 
 ## Current scope
 
@@ -60,6 +60,8 @@ The first version is deliberately conservative. It never writes to the scan sour
 | Source writes | Never performed |
 | Recovery to a separate directory | Supported |
 | Filter by keyword, type, confidence, and size | Supported |
+| Preview text, image, and video candidates | Supported |
+| PDF quick user manual in USB bundle | Supported |
 | Filesystem metadata and original filenames | Not reconstructed in this MVP |
 | Encrypted, compressed, overwritten, or TRIM-discarded data | May be unrecoverable |
 | Guaranteed support for every filesystem or file type | Not supported |

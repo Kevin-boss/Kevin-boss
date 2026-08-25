@@ -1,0 +1,10 @@
+{
+  "entry": "main.typ",
+  "metadata": {
+    "author": "Manus AI",
+    "subtitle": "Quick USB User Manual",
+    "title": "Recovery Desk"
+  },
+  "mode": "report",
+  "theme": "report-theme.typ"
+}

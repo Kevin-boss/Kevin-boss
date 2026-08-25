@@ -6,7 +6,9 @@ const state = {
   files: [],
   selected: new Set(),
   busy: false,
-  job: null
+  job: null,
+  focusedFileId: null,
+  previewRequest: 0
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -28,6 +30,10 @@ const selectedCount = $('#selected-count');
 const destinationLabel = $('#destination-label');
 const recoverButton = $('#recover-button');
 const status = $('#status');
+const previewName = $('#preview-name');
+const previewKind = $('#preview-kind');
+const previewContent = $('#preview-content');
+const previewRecover = $('#preview-recover');
 const filterPanel = $('#filter-panel');
 const searchFilter = $('#search-filter');
 const typeFilter = $('#type-filter');
@@ -117,6 +123,7 @@ function refreshSelectionUI() {
   selectAllCheck.disabled = visible.length === 0 || state.busy;
   chooseDestination.disabled = count === 0 || state.busy;
   recoverButton.disabled = count === 0 || !state.destination || state.busy;
+  previewRecover.disabled = !state.focusedFileId || state.busy;
   selectAll.textContent = visible.length > 0 && visibleSelected === visible.length ? 'Clear visible' : 'Select visible';
   selectAllCheck.checked = visible.length > 0 && visibleSelected === visible.length;
   recoveryPanel.classList.toggle('hidden', count === 0);
@@ -150,11 +157,55 @@ function renderResults() {
     if (checkbox.checked) state.selected.add(checkbox.dataset.id); else state.selected.delete(checkbox.dataset.id);
     refreshSelectionUI();
   }));
+  resultsBody.querySelectorAll('tr[data-id]').forEach((row) => row.addEventListener('click', (event) => {
+    if (event.target.closest('input')) return;
+    const file = state.files.find((candidate) => candidate.id === row.dataset.id);
+    if (file) showPreview(file);
+  }));
   refreshSelectionUI();
 }
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[character]);
+}
+
+function clearPreview() {
+  state.focusedFileId = null;
+  state.previewRequest += 1;
+  previewName.textContent = 'Select a result';
+  previewKind.textContent = '—';
+  previewContent.innerHTML = '<div class="preview-empty"><span class="preview-symbol">◌</span><strong>Nothing selected</strong><span>Click a file row to inspect it before recovery.</span></div>';
+  refreshSelectionUI();
+}
+
+function setPreviewMessage(title, kind, message) {
+  previewName.textContent = title;
+  previewKind.textContent = kind;
+  previewContent.innerHTML = `<div class="preview-empty"><span class="preview-symbol">⌁</span><strong>${escapeHtml(message)}</strong><span>This file can still be selected for recovery.</span></div>`;
+}
+
+async function showPreview(file) {
+  state.focusedFileId = file.id;
+  const requestId = ++state.previewRequest;
+  previewName.textContent = file.name;
+  previewKind.textContent = file.kind;
+  previewContent.innerHTML = '<div class="preview-empty"><span class="preview-symbol">…</span><strong>Loading preview</strong><span>Reading only the selected byte range.</span></div>';
+  refreshSelectionUI();
+  try {
+    const preview = await window.recoveryAPI.createPreview({ sourcePath: state.sourcePath, item: file });
+    if (requestId !== state.previewRequest) return;
+    if (preview.kind === 'text') {
+      previewContent.innerHTML = `<pre class="preview-text">${escapeHtml(preview.content)}</pre>`;
+    } else if (preview.kind === 'image') {
+      previewContent.innerHTML = `<img src="${preview.dataUrl}" alt="Preview of ${escapeHtml(file.name)}" />`;
+    } else if (preview.kind === 'video') {
+      previewContent.innerHTML = `<video controls preload="metadata" src="${preview.url}"></video>`;
+    } else {
+      setPreviewMessage(preview.title || file.name, preview.kind, preview.message || 'Preview is not available.');
+    }
+  } catch (error) {
+    if (requestId === state.previewRequest) setPreviewMessage(file.name, 'error', error.message || 'Preview could not be loaded.');
+  }
 }
 
 function renderSources(sources) {
@@ -183,6 +234,7 @@ async function startScan() {
   state.destination = '';
   state.files = [];
   state.selected.clear();
+  clearPreview();
   searchFilter.value = '';
   typeFilter.value = 'all';
   confidenceFilter.value = 'all';
@@ -251,6 +303,19 @@ selectAllCheck.addEventListener('change', () => {
 });
 chooseDestination.addEventListener('click', chooseRecoveryDestination);
 recoverButton.addEventListener('click', startRecovery);
+previewRecover.addEventListener('click', async () => {
+  const file = state.files.find((candidate) => candidate.id === state.focusedFileId);
+  if (!file) return;
+  if (!state.destination) {
+    state.selected.add(file.id);
+    renderResults();
+    await chooseRecoveryDestination();
+    return;
+  }
+  state.selected = new Set([file.id]);
+  renderResults();
+  await startRecovery();
+});
 [searchFilter, typeFilter, confidenceFilter, minSizeFilter, maxSizeFilter].forEach((control) => control.addEventListener('input', renderResults));
 [typeFilter, confidenceFilter].forEach((control) => control.addEventListener('change', renderResults));
 $('#clear-filters').addEventListener('click', () => {
