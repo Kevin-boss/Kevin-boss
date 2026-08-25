@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:;" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recovery Desk</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand-mark" aria-hidden="true">R</div>
+      <div>
+        <p class="eyebrow">READ-ONLY RECOVERY</p>
+        <h1>Recovery Desk</h1>
+      </div>
+      <div class="topbar-spacer"></div>
+      <span id="platform-badge" class="platform-badge">Desktop</span>
+    </header>
+
+    <section class="hero">
+      <div>
+        <p class="eyebrow accent">RECOVER WITH CONFIDENCE</p>
+        <h2>Find what was lost.<br /><span>Protect what remains.</span></h2>
+        <p class="hero-copy">Scan a disk image, volume, or raw device for recognizable file fragments, then restore selected results to a separate destination.</p>
+      </div>
+      <div class="hero-stat">
+        <strong id="result-count">0</strong>
+        <span>files found</span>
+      </div>
+    </section>
+
+    <section class="safety-banner">
+      <div class="safety-icon">!</div>
+      <div><strong>Source stays untouched.</strong> Recovery Desk only reads from the selected source. Always recover to a different drive when possible, especially for SSDs and failing media.</div>
+    </section>
+
+    <nav class="steps" aria-label="Recovery steps">
+      <div class="step active" data-step="1"><span>01</span><div><strong>Choose source</strong><small>Disk, volume, or image</small></div></div>
+      <div class="step" data-step="2"><span>02</span><div><strong>Review results</strong><small>Select files to restore</small></div></div>
+      <div class="step" data-step="3"><span>03</span><div><strong>Recover safely</strong><small>Write to another location</small></div></div>
+    </nav>
+
+    <section class="workspace">
+      <div class="section-heading"><div><p class="eyebrow">STEP 01 / SOURCE</p><h3>Where should we look?</h3></div><button id="refresh-sources" class="icon-button" title="Refresh detected sources" aria-label="Refresh detected sources">↻</button></div>
+      <div class="source-grid">
+        <div class="field-card">
+          <label for="source-path">Source path</label>
+          <div class="input-row"><input id="source-path" type="text" placeholder="/dev/sdb, D:\\, or /path/to/disk.img" autocomplete="off" /><button id="scan-button" class="primary-button">Start scan</button></div>
+          <p class="field-help">Raw devices may require administrator/root permission. Do not scan the drive where you plan to save recovered files.</p>
+        </div>
+        <div class="detected-card"><div class="card-label">Detected sources</div><div id="source-list" class="source-list"><div class="empty-small">Looking for available volumes…</div></div></div>
+      </div>
+
+      <div id="progress-panel" class="progress-panel hidden"><div class="progress-row"><span id="progress-label">Preparing scan…</span><span id="progress-percent">0%</span></div><div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div><div class="progress-meta"><span id="progress-detail">Read-only mode</span><button id="cancel-button" class="text-button">Cancel</button></div></div>
+
+      <div class="section-heading results-heading"><div><p class="eyebrow">STEP 02 / RESULTS</p><h3>Recoverable file fragments</h3></div><div class="result-actions"><button id="select-all" class="secondary-button" disabled>Select all</button><button id="choose-destination" class="secondary-button" disabled>Choose destination</button></div></div>
+      <div class="table-wrap"><table><thead><tr><th class="check-col"><input id="select-all-check" type="checkbox" disabled aria-label="Select all files" /></th><th>File</th><th>Type</th><th>Offset</th><th>Size</th><th>Confidence</th></tr></thead><tbody id="results-body"><tr><td colspan="6" class="empty-state"><div class="empty-illustration">⌁</div><strong>No scan results yet</strong><span>Choose a source above to begin a read-only scan.</span></td></tr></tbody></table></div>
+
+      <div id="recovery-panel" class="recovery-panel hidden"><div><p class="eyebrow accent">STEP 03 / RESTORE</p><h3>Ready to recover <span id="selected-count">0</span> files</h3><p id="destination-label">Choose a separate destination folder before starting.</p></div><button id="recover-button" class="primary-button" disabled>Recover selected</button></div>
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+    </section>
+
+    <footer><span>Recovery Desk v<span id="app-version">0.1.0</span></span><span>Read-only source access · Local processing</span></footer>
+  </main>
+  <script src="./renderer.js"></script>
+</body>
+</html>
+
