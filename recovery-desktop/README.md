@@ -41,6 +41,12 @@ npm run bundle:usb
 
 For a complete USB bundle, build the three platform artifacts and then combine the three platform directories under one `usb-bundle` folder. The included bundle assembler automatically creates the folders and launch helpers for every artifact that exists in `dist/`.
 
+## Filtering recovery results
+
+After a scan completes, use the filter toolbar above the results table to narrow recoverable fragments by keyword, file type, confidence level, minimum size, and maximum size. The keyword search checks the generated filename, detected type, MIME type, and extension. The filters are applied locally to the scan results and do not rescan or modify the source.
+
+Select individual rows or use **Select visible** to select only the rows currently shown. If a filter hides an already selected row, that row remains selected; the recovery panel always shows the total selected count. Review that count before choosing a destination and starting recovery.
+
 ## Current scope
 
 The first version is deliberately conservative. It never writes to the scan source, never mounts or repairs a filesystem, and refuses to use the source itself as the recovery destination. It supports signature detection and bounded carving for JPEG, PNG, PDF, ZIP, GIF, BMP, MP3, and MP4 fragments. Recovered files use offset-based names because original filenames and folders are generally filesystem metadata rather than content inside the carved bytes.
@@ -53,6 +59,7 @@ The first version is deliberately conservative. It never writes to the scan sour
 | USB operation without installation | Supported through platform-specific portable builds |
 | Source writes | Never performed |
 | Recovery to a separate directory | Supported |
+| Filter by keyword, type, confidence, and size | Supported |
 | Filesystem metadata and original filenames | Not reconstructed in this MVP |
 | Encrypted, compressed, overwritten, or TRIM-discarded data | May be unrecoverable |
 | Guaranteed support for every filesystem or file type | Not supported |

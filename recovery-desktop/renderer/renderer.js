@@ -28,6 +28,13 @@ const selectedCount = $('#selected-count');
 const destinationLabel = $('#destination-label');
 const recoverButton = $('#recover-button');
 const status = $('#status');
+const filterPanel = $('#filter-panel');
+const searchFilter = $('#search-filter');
+const typeFilter = $('#type-filter');
+const confidenceFilter = $('#confidence-filter');
+const minSizeFilter = $('#min-size-filter');
+const maxSizeFilter = $('#max-size-filter');
+const filterSummary = $('#filter-summary');
 
 function setStatus(message, tone = '') {
   status.textContent = message || '';
@@ -71,26 +78,66 @@ function setBusy(busy, job = null) {
   else scanButton.textContent = job === 'recovery' ? 'Recovering…' : 'Scanning…';
 }
 
+function fileType(file) {
+  return String(file.extension || `.${file.kind || 'unknown'}`).toLowerCase();
+}
+
+function getVisibleFiles() {
+  const query = searchFilter.value.trim().toLowerCase();
+  const type = typeFilter.value;
+  const confidence = confidenceFilter.value;
+  const minKB = Number.parseFloat(minSizeFilter.value);
+  const maxKB = Number.parseFloat(maxSizeFilter.value);
+  const hasMin = Number.isFinite(minKB) && minKB >= 0;
+  const hasMax = Number.isFinite(maxKB) && maxKB >= 0;
+  return state.files.filter((file) => {
+    const searchable = `${file.name} ${file.kind} ${file.mime} ${file.extension}`.toLowerCase();
+    const sizeKB = file.size / 1024;
+    return (!query || searchable.includes(query)) &&
+      (type === 'all' || fileType(file) === type) &&
+      (confidence === 'all' || file.confidence === confidence) &&
+      (!hasMin || sizeKB >= minKB) &&
+      (!hasMax || sizeKB <= maxKB);
+  });
+}
+
+function populateTypeFilter() {
+  const current = typeFilter.value || 'all';
+  const types = [...new Set(state.files.map(fileType))].sort();
+  typeFilter.innerHTML = '<option value="all">All types</option>' + types.map((type) => `<option value="${escapeHtml(type)}">${escapeHtml(type.toUpperCase())}</option>`).join('');
+  typeFilter.value = types.includes(current) ? current : 'all';
+}
+
 function refreshSelectionUI() {
   const count = state.selected.size;
+  const visible = getVisibleFiles();
+  const visibleSelected = visible.filter((file) => state.selected.has(file.id)).length;
   selectedCount.textContent = String(count);
-  selectAll.disabled = state.files.length === 0 || state.busy;
-  selectAllCheck.disabled = state.files.length === 0 || state.busy;
+  selectAll.disabled = visible.length === 0 || state.busy;
+  selectAllCheck.disabled = visible.length === 0 || state.busy;
   chooseDestination.disabled = count === 0 || state.busy;
   recoverButton.disabled = count === 0 || !state.destination || state.busy;
-  selectAll.textContent = count === state.files.length && count > 0 ? 'Clear all' : 'Select all';
-  selectAllCheck.checked = state.files.length > 0 && count === state.files.length;
+  selectAll.textContent = visible.length > 0 && visibleSelected === visible.length ? 'Clear visible' : 'Select visible';
+  selectAllCheck.checked = visible.length > 0 && visibleSelected === visible.length;
   recoveryPanel.classList.toggle('hidden', count === 0);
 }
 
 function renderResults() {
-  resultCount.textContent = String(state.files.length);
+  const visible = getVisibleFiles();
+  resultCount.textContent = String(visible.length);
+  filterSummary.textContent = `Showing ${visible.length} of ${state.files.length} file${state.files.length === 1 ? '' : 's'}`;
+  filterPanel.classList.toggle('hidden', state.files.length === 0);
   if (!state.files.length) {
     resultsBody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-illustration">⌁</div><strong>No recognizable file fragments found</strong><span>Try a disk image or raw device with administrator/root permission.</span></td></tr>';
     refreshSelectionUI();
     return;
   }
-  resultsBody.innerHTML = state.files.map((file) => `
+  if (!visible.length) {
+    resultsBody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-illustration">⌕</div><strong>No files match these filters</strong><span>Adjust the filters or clear them to see all scan results.</span></td></tr>';
+    refreshSelectionUI();
+    return;
+  }
+  resultsBody.innerHTML = visible.map((file) => `
     <tr data-id="${escapeHtml(file.id)}">
       <td class="check-col"><input class="file-check" type="checkbox" data-id="${escapeHtml(file.id)}" ${state.selected.has(file.id) ? 'checked' : ''} aria-label="Select ${escapeHtml(file.name)}" /></td>
       <td><span class="file-name">${escapeHtml(file.name)}</span></td>
@@ -136,6 +183,11 @@ async function startScan() {
   state.destination = '';
   state.files = [];
   state.selected.clear();
+  searchFilter.value = '';
+  typeFilter.value = 'all';
+  confidenceFilter.value = 'all';
+  minSizeFilter.value = '';
+  maxSizeFilter.value = '';
   destinationLabel.textContent = 'Choose a separate destination folder before starting.';
   renderResults();
   setStep(1);
@@ -145,10 +197,11 @@ async function startScan() {
   try {
     const files = await window.recoveryAPI.startScan(source);
     state.files = files;
+    populateTypeFilter();
     renderResults();
     setStep(files.length ? 2 : 1);
     setProgress(100, 'Scan complete', `${files.length} recognizable fragment${files.length === 1 ? '' : 's'} found`);
-    setStatus(files.length ? 'Review the results and select the files you want to recover.' : 'No recognizable file fragments were found.', files.length ? '' : 'error');
+    setStatus(files.length ? 'Review the results, filter them if needed, and select the files you want to recover.' : 'No recognizable file fragments were found.', files.length ? '' : 'error');
   } catch (error) {
     setStatus(error.message || 'The scan could not be completed.', 'error');
   } finally { setBusy(false); }
@@ -186,15 +239,28 @@ sourceInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') 
 $('#refresh-sources').addEventListener('click', loadSources);
 cancelButton.addEventListener('click', () => window.recoveryAPI.cancelJob());
 selectAll.addEventListener('click', () => {
-  if (state.selected.size === state.files.length) state.selected.clear(); else state.files.forEach((file) => state.selected.add(file.id));
+  const visible = getVisibleFiles();
+  const allVisibleSelected = visible.length > 0 && visible.every((file) => state.selected.has(file.id));
+  visible.forEach((file) => { if (allVisibleSelected) state.selected.delete(file.id); else state.selected.add(file.id); });
   renderResults();
 });
 selectAllCheck.addEventListener('change', () => {
-  if (selectAllCheck.checked) state.files.forEach((file) => state.selected.add(file.id)); else state.selected.clear();
+  const visible = getVisibleFiles();
+  visible.forEach((file) => { if (selectAllCheck.checked) state.selected.add(file.id); else state.selected.delete(file.id); });
   renderResults();
 });
 chooseDestination.addEventListener('click', chooseRecoveryDestination);
 recoverButton.addEventListener('click', startRecovery);
+[searchFilter, typeFilter, confidenceFilter, minSizeFilter, maxSizeFilter].forEach((control) => control.addEventListener('input', renderResults));
+[typeFilter, confidenceFilter].forEach((control) => control.addEventListener('change', renderResults));
+$('#clear-filters').addEventListener('click', () => {
+  searchFilter.value = '';
+  typeFilter.value = 'all';
+  confidenceFilter.value = 'all';
+  minSizeFilter.value = '';
+  maxSizeFilter.value = '';
+  renderResults();
+});
 
 window.recoveryAPI.onScanProgress((progress) => {
   const percent = progress.totalBytes ? (progress.bytesRead / progress.totalBytes) * 100 : 0;
@@ -216,4 +282,3 @@ window.recoveryAPI.onRecoveryComplete(() => refreshSelectionUI());
   } catch { /* The static UI remains usable if app metadata is unavailable. */ }
   await loadSources();
 })();
-
