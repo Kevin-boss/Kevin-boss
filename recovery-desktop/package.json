@@ -15,7 +15,11 @@
     "start": "electron .",
     "dev": "electron .",
     "test": "node --test tests/*.test.js",
-    "package": "electron-builder"
+    "package": "electron-builder",
+    "package:windows": "electron-builder --win portable",
+    "package:macos": "electron-builder --mac dir",
+    "package:linux": "electron-builder --linux AppImage",
+    "bundle:usb": "node scripts/make-usb-bundle.js"
   },
   "devDependencies": {
     "electron": "^37.2.6",
@@ -24,7 +28,7 @@
   "build": {
     "appId": "com.recoverydesk.app",
     "productName": "Recovery Desk",
-    "asar": true,
+      "asar": true,
     "files": [
       "main.js",
       "preload.js",
@@ -35,15 +39,14 @@
       "output": "dist"
     },
     "win": {
-      "target": ["nsis", "portable"]
+      "target": ["portable"]
     },
     "mac": {
-      "target": ["dmg"]
+      "target": ["zip"]
     },
     "linux": {
-      "target": ["AppImage", "deb"],
-      "category": "Utility",
-      "maintainer": "maintainers@example.invalid"
+      "target": ["AppImage"],
+      "category": "Utility"
     }
   }
 }
