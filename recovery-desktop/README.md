@@ -39,7 +39,7 @@ Then assemble any artifacts that exist in `dist/`:
 npm run bundle:usb
 ```
 
-For a complete USB bundle, build on Windows, macOS, and Linux, then combine the three platform directories under one `usb-bundle` folder. The repository includes a GitHub Actions workflow that builds all three platform artifacts on their native runners and publishes them as a downloadable bundle artifact.
+For a complete USB bundle, build the three platform artifacts and then combine the three platform directories under one `usb-bundle` folder. The included bundle assembler automatically creates the folders and launch helpers for every artifact that exists in `dist/`.
 
 ## Current scope
 
